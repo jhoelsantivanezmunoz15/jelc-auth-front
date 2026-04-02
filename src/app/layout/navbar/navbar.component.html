@@ -1,0 +1,10 @@
+<nav class="navbar">
+  <a routerLink="/dashboard" class="navbar-brand">JELC Auth</a>
+
+  <div class="navbar-actions">
+    @if (authState.isAuthenticated()) {
+      <span class="navbar-user">{{ authState.session()?.email }}</span>
+      <button class="btn btn-sm" (click)="logout()">Cerrar sesión</button>
+    }
+  </div>
+</nav>

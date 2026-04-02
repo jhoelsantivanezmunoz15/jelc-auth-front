@@ -1,0 +1,29 @@
+<div class="page-container">
+  <h2>Dashboard</h2>
+  <p>Bienvenido, <strong>{{ authState.session()?.email }}</strong></p>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <h4>Roles</h4>
+      <ul>
+        @for (role of authState.currentRoles(); track role) {
+          <li>{{ role }}</li>
+        }
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h4>Permisos</h4>
+      <ul>
+        @for (perm of authState.currentPermissions(); track perm) {
+          <li>{{ perm }}</li>
+        }
+      </ul>
+    </div>
+  </div>
+
+  <div class="quick-links">
+    <a routerLink="/roles" class="btn">Gestionar Roles</a>
+    <a routerLink="/habits/create" class="btn">Crear Hábito</a>
+  </div>
+</div>

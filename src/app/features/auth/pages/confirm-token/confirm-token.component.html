@@ -1,0 +1,28 @@
+<div class="auth-container">
+  <h2>Confirmar token</h2>
+
+  @if (success()) {
+    <div class="alert alert-success">Operación exitosa. Redirigiendo...</div>
+  } @else {
+    @if (error()) {
+      <div class="alert alert-error">{{ error() }}</div>
+    }
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-group">
+        <label>Token de confirmación</label>
+        <input type="text" formControlName="confirmationToken" />
+      </div>
+
+      @if (isPasswordReset()) {
+        <div class="form-group">
+          <label>Nueva contraseña</label>
+          <input type="password" formControlName="newPassword" />
+        </div>
+      }
+
+      <button type="submit" [disabled]="form.invalid || loading()">
+        {{ loading() ? 'Confirmando...' : 'Confirmar' }}
+      </button>
+    </form>
+  }
+</div>

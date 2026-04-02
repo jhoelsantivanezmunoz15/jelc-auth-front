@@ -1,0 +1,26 @@
+<div class="page-container">
+  <h2>{{ isEdit() ? 'Editar rol' : 'Nuevo rol' }}</h2>
+
+  @if (error()) {
+    <div class="alert alert-error">{{ error() }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form-group">
+      <label>Nombre del rol</label>
+      <input type="text" formControlName="name" />
+    </div>
+
+    <div class="form-group">
+      <label>Descripción</label>
+      <textarea formControlName="description" rows="3"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+        {{ loading() ? 'Guardando...' : (isEdit() ? 'Actualizar' : 'Crear') }}
+      </button>
+      <a routerLink="/roles" class="btn">Cancelar</a>
+    </div>
+  </form>
+</div>

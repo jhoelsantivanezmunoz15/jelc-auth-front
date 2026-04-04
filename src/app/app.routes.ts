@@ -1,21 +1,25 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { menuGuard } from './core/guards/menu.guard';
 
 export const routes: Routes = [
-  // Rutas públicas (auth)
+  // ─── Rutas públicas ──────────────────────────────────────────────────────
   {
     path: 'auth',
     loadChildren: () =>
       import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES),
   },
 
-  // Rutas privadas (requieren JWT válido)
+  // ─── Rutas privadas (requieren JWT válido) ───────────────────────────────
   {
     path: '',
     loadComponent: () =>
-      import('./layout/main-layout/main-layout.component').then(m => m.MainLayoutComponent),
+      import('./layout/main-layout/main-layout.component').then(
+        m => m.MainLayoutComponent
+      ),
     canActivate: [authGuard],
     children: [
+      // Dashboard: siempre accesible para usuarios autenticados (punto de entrada)
       {
         path: 'dashboard',
         loadComponent: () =>
@@ -23,16 +27,24 @@ export const routes: Routes = [
             m => m.DashboardComponent
           ),
       },
+
+      // Rutas dinámicas: el menuGuard consulta el árbol de menús del backend.
+      // Si la ruta no aparece en el menú del usuario → redirige al dashboard.
+      // Añadir un nuevo módulo aquí + registrarlo en el backend es suficiente
+      // para que el acceso se conceda/revoque automáticamente.
       {
         path: 'roles',
+        canActivate: [menuGuard],
         loadChildren: () =>
           import('./features/roles/roles.routes').then(m => m.ROLES_ROUTES),
       },
       {
-        path: 'habits',
+        path: 'users',
+        canActivate: [menuGuard],
         loadChildren: () =>
-          import('./features/habits/habits.routes').then(m => m.HABITS_ROUTES),
+          import('./features/users/users.routes').then(m => m.USERS_ROUTES),
       },
+
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

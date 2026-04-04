@@ -1,26 +1,51 @@
-<div class="page-container">
-  <h2>{{ isEdit() ? 'Editar rol' : 'Nuevo rol' }}</h2>
+<div class="max-w-lg">
+  <h2 class="text-2xl font-bold mb-6">{{ isEdit() ? 'Editar rol' : 'Nuevo rol' }}</h2>
 
   @if (error()) {
-    <div class="alert alert-error">{{ error() }}</div>
+    <div class="mb-4 px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ error() }}</div>
   }
 
   <form [formGroup]="form" (ngSubmit)="submit()">
-    <div class="form-group">
-      <label>Nombre del rol</label>
-      <input type="text" formControlName="name" />
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del rol</label>
+      <input type="text" formControlName="name"
+             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
     </div>
 
-    <div class="form-group">
-      <label>Descripción</label>
-      <textarea formControlName="description" rows="3"></textarea>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+      <textarea formControlName="description" rows="3"
+                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"></textarea>
     </div>
 
-    <div class="form-actions">
-      <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Permisos</label>
+      @if (availablePermissions().length === 0) {
+        <p class="text-sm text-gray-400">Cargando permisos...</p>
+      } @else {
+        <div class="flex flex-wrap gap-2">
+          @for (permission of availablePermissions(); track permission.id) {
+            <button type="button" (click)="togglePermission(permission.code)"
+                    class="px-3 py-1 text-sm border rounded-md cursor-pointer transition-colors"
+                    [class]="isPermissionSelected(permission.code)
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'">
+              {{ permission.name || permission.code }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" [disabled]="form.invalid || loading()"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors">
         {{ loading() ? 'Guardando...' : (isEdit() ? 'Actualizar' : 'Crear') }}
       </button>
-      <a routerLink="/roles" class="btn">Cancelar</a>
+      <a routerLink="/roles"
+         class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 no-underline transition-colors">
+        Cancelar
+      </a>
     </div>
   </form>
 </div>

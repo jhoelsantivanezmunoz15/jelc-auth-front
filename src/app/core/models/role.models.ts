@@ -3,12 +3,14 @@
 export interface Permission {
   id: string;
   code: string;
+  name: string;
 }
 
 export interface Role {
   id: string;
   name: string;
   description: string;
+  active: boolean;
   permissions: Permission[];
 }
 
@@ -32,4 +34,12 @@ export interface ApiResponse<T> {
   status: ApiStatus;
   message: string;
   data: T;
+}
+
+export interface PageResult<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }

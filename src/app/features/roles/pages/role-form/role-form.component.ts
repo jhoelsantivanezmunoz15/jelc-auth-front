@@ -1,13 +1,15 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { RoleService } from '../../services/role.service';
+import { PermissionService } from '../../../permissions/services/permission.service';
+import { Permission } from '../../../../core/models/role.models';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
 
 @Component({
   selector: 'app-role-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './role-form.component.html',
 })
 export class RoleFormComponent implements OnInit {
@@ -16,10 +18,12 @@ export class RoleFormComponent implements OnInit {
   error = signal<string | null>(null);
   isEdit = signal(false);
   roleId = signal<string | null>(null);
+  availablePermissions = signal<Permission[]>([]);
 
   constructor(
     private fb: FormBuilder,
     private roleService: RoleService,
+    private permissionService: PermissionService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -31,6 +35,7 @@ export class RoleFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadPermissions();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEdit.set(true);
@@ -39,18 +44,21 @@ export class RoleFormComponent implements OnInit {
     }
   }
 
+  private loadPermissions(): void {
+    this.permissionService.getAll().subscribe({
+      next: res => this.availablePermissions.set(res.data),
+    });
+  }
+
   private loadRole(id: string): void {
     this.loading.set(true);
-    this.roleService.getAll().subscribe({
+    this.roleService.getById(id).subscribe({
       next: res => {
-        const role = res.data.find(r => r.id === id);
-        if (role) {
-          this.form.patchValue({
-            name: role.name,
-            description: role.description,
-            permissions: role.permissions.map(p => p.code),
-          });
-        }
+        this.form.patchValue({
+          name: res.data.name,
+          description: res.data.description,
+          permissions: res.data.permissions.map(p => p.code),
+        });
         this.loading.set(false);
       },
       error: (err: BackendError) => {
@@ -58,6 +66,18 @@ export class RoleFormComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  isPermissionSelected(code: string): boolean {
+    return (this.form.value.permissions as string[]).includes(code);
+  }
+
+  togglePermission(code: string): void {
+    const current: string[] = this.form.value.permissions ?? [];
+    const updated = current.includes(code)
+      ? current.filter(c => c !== code)
+      : [...current, code];
+    this.form.patchValue({ permissions: updated });
   }
 
   submit(): void {

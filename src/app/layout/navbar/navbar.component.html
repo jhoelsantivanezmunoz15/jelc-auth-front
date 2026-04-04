@@ -1,10 +1,14 @@
-<nav class="navbar">
-  <a routerLink="/dashboard" class="navbar-brand">JELC Auth</a>
+<nav class="flex items-center justify-between h-14 px-6 bg-indigo-600 text-white">
+  <a routerLink="/dashboard" class="font-bold text-lg text-white no-underline hover:no-underline">JELC Auth</a>
 
-  <div class="navbar-actions">
+  <div class="flex items-center gap-3">
     @if (authState.isAuthenticated()) {
-      <span class="navbar-user">{{ authState.session()?.email }}</span>
-      <button class="btn btn-sm" (click)="logout()">Cerrar sesión</button>
+      <span class="text-sm opacity-80">{{ authState.session()?.email }}</span>
+      <button
+        class="text-sm px-3 py-1 border border-white/30 rounded-md bg-transparent text-white cursor-pointer hover:bg-indigo-700 transition-colors"
+        (click)="logout()">
+        Cerrar sesión
+      </button>
     }
   </div>
 </nav>

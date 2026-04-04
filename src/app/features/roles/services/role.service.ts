@@ -1,7 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiResponse, CreateRoleRequest, Role, UpdateRoleRequest } from '../../../core/models/role.models';
+import { ApiResponse, CreateRoleRequest, PageResult, Role, UpdateRoleRequest } from '../../../core/models/role.models';
 import { VoidResponse } from '../../../core/models/auth.models';
 import { environment } from '../../../../environments/environment';
 
@@ -11,8 +11,14 @@ export class RoleService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<ApiResponse<Role[]>> {
-    return this.http.get<ApiResponse<Role[]>>(`${this.base}/getAll`);
+  getAll(search?: string, page = 0, size = 10): Observable<ApiResponse<PageResult<Role>>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (search) params = params.set('search', search);
+    return this.http.get<ApiResponse<PageResult<Role>>>(`${this.base}/getAll`, { params });
+  }
+
+  getById(id: string): Observable<ApiResponse<Role>> {
+    return this.http.get<ApiResponse<Role>>(`${this.base}/${id}`);
   }
 
   create(body: CreateRoleRequest): Observable<ApiResponse<Role>> {

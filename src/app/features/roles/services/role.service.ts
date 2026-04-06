@@ -14,7 +14,7 @@ export class RoleService {
   getAll(search?: string, page = 0, size = 10): Observable<ApiResponse<PageResult<Role>>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (search) params = params.set('search', search);
-    return this.http.get<ApiResponse<PageResult<Role>>>(`${this.base}/getAll`, { params });
+    return this.http.get<ApiResponse<PageResult<Role>>>(`${this.base}`, { params });
   }
 
   getById(id: string): Observable<ApiResponse<Role>> {
@@ -22,18 +22,18 @@ export class RoleService {
   }
 
   create(body: CreateRoleRequest): Observable<ApiResponse<Role>> {
-    return this.http.post<ApiResponse<Role>>(`${this.base}/create`, body);
+    return this.http.post<ApiResponse<Role>>(`${this.base}`, body);
   }
 
-  update(body: UpdateRoleRequest): Observable<ApiResponse<Role>> {
-    return this.http.post<ApiResponse<Role>>(`${this.base}/update`, body);
+  update(id: string, body: UpdateRoleRequest): Observable<ApiResponse<Role>> {
+    return this.http.put<ApiResponse<Role>>(`${this.base}/${id}`, body);
   }
 
   toggleActive(roleId: string, active: boolean): Observable<ApiResponse<null>> {
-    return this.http.patch<ApiResponse<null>>(`${this.base}/${roleId}/${active}`, {});
+    return this.http.patch<ApiResponse<null>>(`${this.base}/${roleId}/status`, { active });
   }
 
   delete(roleId: string): Observable<ApiResponse<null>> {
-    return this.http.delete<ApiResponse<null>>(`${this.base}/delete/${roleId}`);
+    return this.http.delete<ApiResponse<null>>(`${this.base}/${roleId}`);
   }
 }

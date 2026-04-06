@@ -22,9 +22,7 @@ export interface CreateRoleRequest {
   permissions: string[];
 }
 
-export interface UpdateRoleRequest extends CreateRoleRequest {
-  id: string;
-}
+export type UpdateRoleRequest = CreateRoleRequest;
 
 // ─── Responses ─────────────────────────────────────────────────────────────
 

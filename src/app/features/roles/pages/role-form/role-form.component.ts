@@ -86,7 +86,7 @@ export class RoleFormComponent implements OnInit {
     this.error.set(null);
 
     const request$ = this.isEdit()
-      ? this.roleService.update({ id: this.roleId()!, ...this.form.value })
+      ? this.roleService.update(this.roleId()!, this.form.value)
       : this.roleService.create(this.form.value);
 
     request$.subscribe({

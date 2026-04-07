@@ -41,18 +41,21 @@ jobs:
     needs: build-and-push
     steps:
       - name: Deploy frontend service
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.QA_HOST }}
-          username: ${{ secrets.QA_USER }}
-          key: ${{ secrets.QA_SSH_KEY }}
-          script: |
-            cd /opt/jelc-auth
+        env:
+          SSH_KEY: ${{ secrets.QA_SSH_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+        run: |
+          echo "$SSH_KEY" > /tmp/deploy_key.pem
+          chmod 600 /tmp/deploy_key.pem
 
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          ssh -i /tmp/deploy_key.pem \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.QA_USER }}@${{ secrets.QA_HOST }} \
+            "cd /opt/jelc-auth && \
+             echo '$GH_TOKEN' | docker login ghcr.io -u $GH_ACTOR --password-stdin && \
+             docker compose -f docker-compose.qa.yml pull frontend && \
+             docker compose -f docker-compose.qa.yml up -d --no-deps frontend && \
+             docker image prune -f"
 
-            docker compose -f docker-compose.qa.yml pull frontend
-
-            docker compose -f docker-compose.qa.yml up -d --no-deps frontend
-
-            docker image prune -f
+          rm -f /tmp/deploy_key.pem

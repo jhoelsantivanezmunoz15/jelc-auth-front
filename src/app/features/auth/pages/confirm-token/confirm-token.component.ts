@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
+import { ConfirmationTokenRequest } from '../../../../core/models/auth.models';
 
 @Component({
   selector: 'app-confirm-token',
@@ -47,7 +48,12 @@ export class ConfirmTokenComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.authService.confirmToken(this.form.value).subscribe({
+    const payload: ConfirmationTokenRequest = {
+      confirmationToken: this.form.value.confirmationToken,
+      ...(this.isPasswordReset() && { newPassword: this.form.value.newPassword }),
+    };
+
+    this.authService.confirmToken(payload).subscribe({
       next: () => {
         this.success.set(true);
         this.loading.set(false);

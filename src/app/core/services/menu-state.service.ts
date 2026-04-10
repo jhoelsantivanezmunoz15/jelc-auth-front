@@ -84,7 +84,8 @@ export class MenuStateService {
    */
   isRoutePermitted(path: string): boolean {
     if (!this._loaded) return true;
-    return this._flatRoutes().has(path);
+    const routes = this._flatRoutes();
+    return routes.has(path) || Array.from(routes).some(r => r.startsWith(path + '/'));
   }
 
   /** Vacía el caché. Se llama automáticamente al cerrar sesión. */

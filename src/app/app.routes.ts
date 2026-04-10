@@ -44,6 +44,12 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/users/users.routes').then(m => m.USERS_ROUTES),
       },
+      {
+        path: 'admin',
+        canActivate: [menuGuard],
+        loadChildren: () =>
+          import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
+      },
 
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],

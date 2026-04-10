@@ -37,4 +37,4 @@ export interface CreateSystemConfigRequest {
   editable: boolean;
 }
 
-export { ApiResponse };
+export type { ApiResponse };

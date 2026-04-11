@@ -1,151 +1,176 @@
-<div class="max-w-5xl space-y-8">
+<div class="max-w-7xl space-y-6">
 
   <!-- ── Cabecera ─────────────────────────────────────────────────────────── -->
-  <div>
-    <h2 class="text-2xl font-bold text-gray-900">
-      {{ greeting }},
-      <span class="text-indigo-600">{{ authState.session()?.email }}</span>
-    </h2>
-    <p class="text-sm text-gray-500 mt-1">Resumen de tu sesión y acceso rápido a módulos.</p>
-  </div>
-
-  <!-- ── Tarjetas de estadísticas ─────────────────────────────────────────── -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-
-    <div class="bg-white rounded-lg border border-gray-200 p-5">
-      <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Roles</p>
-      <p class="text-4xl font-bold text-indigo-600">{{ roleCount() }}</p>
-      <p class="text-xs text-gray-400 mt-1">asignados</p>
-    </div>
-
-    <div class="bg-white rounded-lg border border-gray-200 p-5">
-      <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Permisos</p>
-      <p class="text-4xl font-bold text-indigo-600">{{ permissionCount() }}</p>
-      <p class="text-xs text-gray-400 mt-1">en tu sesión</p>
-    </div>
-
-    <div class="bg-white rounded-lg border border-gray-200 p-5">
-      <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Módulos</p>
-      @if (menuState.loading()) {
-        <div class="h-9 w-10 bg-gray-100 rounded animate-pulse"></div>
-      } @else {
-        <p class="text-4xl font-bold text-indigo-600">{{ moduleCount() }}</p>
-      }
-      <p class="text-xs text-gray-400 mt-1">accesibles</p>
-    </div>
-
-    <div class="bg-white rounded-lg border border-gray-200 p-5">
-      <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Token expira</p>
-      <p class="text-4xl font-bold"
-         [class]="tokenExpired() ? 'text-red-500' : 'text-indigo-600'">
-        {{ tokenExpiresIn() }}
-      </p>
-      <p class="text-xs text-gray-400 mt-1">
-        {{ authState.session()?.expiresAt | date:'HH:mm' }}
-      </p>
-    </div>
-
-  </div>
-
-  <!-- ── Dos columnas: Roles y Permisos ────────────────────────────────────── -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-    <!-- Roles -->
-    <div class="bg-white rounded-lg border border-gray-200 p-5">
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">Tus roles</h3>
-      @if (authState.currentRoles().length === 0) {
-        <p class="text-sm text-gray-400">Sin roles asignados.</p>
-      } @else {
-        <div class="flex flex-wrap gap-2">
-          @for (role of authState.currentRoles(); track role) {
-            <span class="px-3 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
-              {{ role }}
-            </span>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Permisos -->
-    <div class="bg-white rounded-lg border border-gray-200 p-5">
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">
-        Permisos activos
-        <span class="ml-1 font-normal text-gray-400">({{ permissionCount() }})</span>
-      </h3>
-      @if (authState.currentPermissions().length === 0) {
-        <p class="text-sm text-gray-400">Sin permisos asignados.</p>
-      } @else {
-        <div class="flex flex-wrap gap-1 max-h-40 overflow-y-auto pr-1">
-          @for (perm of authState.currentPermissions(); track perm) {
-            <span class="px-2 py-0.5 text-xs font-mono bg-gray-50 text-gray-600 rounded border border-gray-200">
-              {{ perm }}
-            </span>
-          }
-        </div>
-      }
-    </div>
-
-  </div>
-
-  <!-- ── Acceso rápido (desde el menú dinámico) ───────────────────────────── -->
-  @if (menuState.loading()) {
+  <div class="flex items-center justify-between">
     <div>
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">Acceso rápido</h3>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        @for (i of [1,2,3,4]; track i) {
-          <div class="h-24 bg-gray-100 rounded-lg animate-pulse"></div>
-        }
+      <h2 class="text-2xl font-bold text-gray-900">
+        {{ greeting }},
+        <span class="text-indigo-600">{{ authState.session()?.email }}</span>
+      </h2>
+      <p class="text-sm text-gray-500 mt-1">Panel de control del sistema</p>
+    </div>
+    <span class="text-xs text-gray-400">{{ authState.session()?.roles?.join(', ') }}</span>
+  </div>
+
+  @if (loading()) {
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      @for (i of [1,2,3,4,5,6,7,8]; track i) {
+        <div class="h-24 bg-gray-100 rounded-xl animate-pulse"></div>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-xl">{{ error() }}</div>
+  } @else if (stats()) {
+
+    <!-- ── Usuarios ──────────────────────────────────────────────────────── -->
+    <div>
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Usuarios</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Total</p>
+          <p class="text-4xl font-bold text-indigo-600">{{ stats()!.totalUsers }}</p>
+          <p class="text-xs text-gray-400 mt-1">registrados</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Activos</p>
+          <p class="text-4xl font-bold text-green-600">{{ stats()!.activeUsers }}</p>
+          <p class="text-xs text-gray-400 mt-1">sin bloqueo</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Bloqueados</p>
+          <p class="text-4xl font-bold" [class]="stats()!.blockedUsers > 0 ? 'text-red-500' : 'text-gray-400'">
+            {{ stats()!.blockedUsers }}
+          </p>
+          <p class="text-xs text-gray-400 mt-1">acceso restringido</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Nuevos</p>
+          <p class="text-4xl font-bold text-teal-600">{{ stats()!.newUsersThisWeek }}</p>
+          <p class="text-xs text-gray-400 mt-1">esta semana</p>
+        </div>
+
       </div>
     </div>
-  } @else if (quickAccessItems().length > 0) {
+
+    <!-- ── Sistema ───────────────────────────────────────────────────────── -->
     <div>
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">Acceso rápido</h3>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        @for (item of quickAccessItems(); track item.id) {
-          <a [routerLink]="item.route"
-             class="flex flex-col items-center justify-center gap-3 p-5 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 no-underline transition-colors group cursor-pointer">
-            @if (item.icon) {
-              <span class="text-2xl text-gray-400 group-hover:text-indigo-500 transition-colors leading-none">
-                {{ item.icon }}
-              </span>
-            } @else {
-              <span class="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 text-base font-bold group-hover:bg-indigo-200 transition-colors">
-                {{ item.name.charAt(0).toUpperCase() }}
-              </span>
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Sistema</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Roles</p>
+          <p class="text-4xl font-bold text-indigo-600">{{ stats()!.totalRoles }}</p>
+          <p class="text-xs text-gray-400 mt-1">configurados</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Permisos</p>
+          <p class="text-4xl font-bold text-indigo-600">{{ stats()!.totalPermissions }}</p>
+          <p class="text-xs text-gray-400 mt-1">disponibles</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Feature Flags</p>
+          <p class="text-4xl font-bold text-indigo-600">
+            {{ stats()!.enabledFeatureFlags }}<span class="text-xl text-gray-400">/{{ stats()!.totalFeatureFlags }}</span>
+          </p>
+          <p class="text-xs text-gray-400 mt-1">activos</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Sesiones activas</p>
+          <p class="text-4xl font-bold text-purple-600">{{ stats()!.activeSessions }}</p>
+          <p class="text-xs text-gray-400 mt-1">tokens válidos</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Actividad de hoy ──────────────────────────────────────────────── -->
+    <div>
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Hoy</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Logins exitosos</p>
+            <p class="text-3xl font-bold text-green-600">{{ stats()!.successfulLoginsToday }}</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+               [class]="stats()!.failedLoginsToday > 10 ? 'bg-red-200' : 'bg-red-100'">
+            <svg class="w-6 h-6" [class]="stats()!.failedLoginsToday > 10 ? 'text-red-700' : 'text-red-500'"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Logins fallidos</p>
+            <p class="text-3xl font-bold" [class]="stats()!.failedLoginsToday > 10 ? 'text-red-700' : 'text-red-500'">
+              {{ stats()!.failedLoginsToday }}
+            </p>
+            @if (stats()!.failedLoginsToday > 10) {
+              <p class="text-xs text-red-600 font-medium mt-0.5">Actividad sospechosa</p>
             }
-            <span class="text-xs font-medium text-gray-700 group-hover:text-indigo-700 text-center leading-tight transition-colors">
-              {{ item.name }}
-            </span>
-          </a>
-        }
+          </div>
+        </div>
+
       </div>
     </div>
-  }
 
-  <!-- ── Detalle de sesión ─────────────────────────────────────────────────── -->
-  <div class="bg-white rounded-lg border border-gray-200 p-5">
-    <h3 class="text-sm font-semibold text-gray-700 mb-4">Detalle de sesión</h3>
-    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div class="flex items-center justify-between py-2 border-b border-gray-50">
-        <dt class="text-sm text-gray-500">Email</dt>
-        <dd class="text-sm font-medium text-gray-900">{{ authState.session()?.email }}</dd>
+    <!-- ── Actividad reciente ────────────────────────────────────────────── -->
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h3 class="text-sm font-semibold text-gray-700">Actividad reciente</h3>
       </div>
-      <div class="flex items-center justify-between py-2 border-b border-gray-50">
-        <dt class="text-sm text-gray-500">Expiración del token</dt>
-        <dd class="text-sm font-medium"
-            [class]="tokenExpired() ? 'text-red-600' : 'text-gray-900'">
-          {{ authState.session()?.expiresAt | date:'dd/MM/yyyy, HH:mm' }}
-        </dd>
-      </div>
-      <div class="flex items-center justify-between py-2 border-b border-gray-50">
-        <dt class="text-sm text-gray-500">Roles</dt>
-        <dd class="text-sm font-medium text-gray-900">{{ roleCount() }}</dd>
-      </div>
-      <div class="flex items-center justify-between py-2 border-b border-gray-50">
-        <dt class="text-sm text-gray-500">Permisos</dt>
-        <dd class="text-sm font-medium text-gray-900">{{ permissionCount() }}</dd>
-      </div>
-    </dl>
-  </div>
+      @if (stats()!.recentActivity.length === 0) {
+        <div class="py-10 text-center text-sm text-gray-400">Sin actividad registrada</div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-100">
+                <th class="px-5 py-3">Fecha</th>
+                <th class="px-5 py-3">Acción</th>
+                <th class="px-5 py-3">Usuario</th>
+                <th class="px-5 py-3">Detalle</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (log of stats()!.recentActivity; track log.createdAt) {
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-5 py-3 text-gray-400 whitespace-nowrap text-xs">{{ formatDate(log.createdAt) }}</td>
+                  <td class="px-5 py-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ actionClass(log.action) }}">
+                      {{ log.action }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-gray-700 text-xs">{{ log.performedBy ?? '—' }}</td>
+                  <td class="px-5 py-3 text-gray-500 text-xs max-w-xs truncate">{{ log.detail ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="px-5 py-3 border-t border-gray-100 text-right">
+          <a routerLink="/admin/audit-logs" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+            Ver todos los registros →
+          </a>
+        </div>
+      }
+    </div>
+
+  }
 
 </div>

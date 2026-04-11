@@ -41,6 +41,7 @@ export interface CreateSystemConfigRequest {
 // ─── Audit Logs ─────────────────────────────────────────────────────────────
 
 export type AuditAction =
+  // Auth
   | 'LOGIN_SUCCESS'
   | 'LOGIN_FAILED'
   | 'LOGOUT'
@@ -49,7 +50,26 @@ export type AuditAction =
   | 'USER_REGISTERED'
   | 'EMAIL_CONFIRMED'
   | 'PASSWORD_RESET_REQUESTED'
-  | 'PASSWORD_RESET_COMPLETED';
+  | 'PASSWORD_RESET_COMPLETED'
+  | 'PASSWORD_CHANGED'
+  // Users
+  | 'USER_CREATED'
+  | 'USER_UPDATED'
+  | 'USER_DELETED'
+  | 'USER_BLOCKED'
+  | 'USER_UNBLOCKED'
+  // Roles
+  | 'ROLE_CREATED'
+  | 'ROLE_UPDATED'
+  | 'ROLE_DELETED'
+  // Feature flags
+  | 'FEATURE_FLAG_CREATED'
+  | 'FEATURE_FLAG_TOGGLED'
+  | 'FEATURE_FLAG_DELETED'
+  // System config
+  | 'SYSTEM_CONFIG_CREATED'
+  | 'SYSTEM_CONFIG_UPDATED'
+  | 'SYSTEM_CONFIG_DELETED';
 
 export interface AuditLog {
   id: string;

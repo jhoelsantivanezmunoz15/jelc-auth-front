@@ -26,7 +26,13 @@ export class AuditLogsComponent implements OnInit {
   readonly actions: AuditAction[] = [
     'LOGIN_SUCCESS', 'LOGIN_FAILED', 'LOGOUT', 'TOKEN_REFRESH',
     'TOKEN_THEFT_DETECTED', 'USER_REGISTERED', 'EMAIL_CONFIRMED',
-    'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_COMPLETED',
+    'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_COMPLETED', 'PASSWORD_CHANGED',
+    'USER_CREATED', 'USER_UPDATED', 'USER_DELETED', 'USER_BLOCKED', 'USER_UNBLOCKED',
+    'ROLE_CREATED', 'ROLE_UPDATED', 'ROLE_DELETED',
+    'FEATURE_FLAG_CREATED', 'FEATURE_FLAG_TOGGLED', 'FEATURE_FLAG_DELETED',
+    'SYSTEM_CONFIG_CREATED', 'SYSTEM_CONFIG_UPDATED', 'SYSTEM_CONFIG_DELETED',
+    'MFA_ENABLED', 'MFA_DISABLED', 'MFA_CHALLENGE_VERIFIED', 'MFA_CHALLENGE_FAILED',
+    'OAUTH2_LOGIN',
   ];
 
   readonly actionLabels: Record<AuditAction, string> = {
@@ -39,6 +45,26 @@ export class AuditLogsComponent implements OnInit {
     EMAIL_CONFIRMED: 'Email confirmado',
     PASSWORD_RESET_REQUESTED: 'Reseteo de contraseña solicitado',
     PASSWORD_RESET_COMPLETED: 'Reseteo de contraseña completado',
+    PASSWORD_CHANGED: 'Contraseña cambiada',
+    USER_CREATED: 'Usuario creado',
+    USER_UPDATED: 'Usuario actualizado',
+    USER_DELETED: 'Usuario eliminado',
+    USER_BLOCKED: 'Usuario bloqueado',
+    USER_UNBLOCKED: 'Usuario desbloqueado',
+    ROLE_CREATED: 'Rol creado',
+    ROLE_UPDATED: 'Rol actualizado',
+    ROLE_DELETED: 'Rol eliminado',
+    FEATURE_FLAG_CREATED: 'Feature flag creado',
+    FEATURE_FLAG_TOGGLED: 'Feature flag activado/desactivado',
+    FEATURE_FLAG_DELETED: 'Feature flag eliminado',
+    SYSTEM_CONFIG_CREATED: 'Config. creada',
+    SYSTEM_CONFIG_UPDATED: 'Config. actualizada',
+    SYSTEM_CONFIG_DELETED: 'Config. eliminada',
+    MFA_ENABLED: 'MFA activado',
+    MFA_DISABLED: 'MFA desactivado',
+    MFA_CHALLENGE_VERIFIED: 'MFA verificado',
+    MFA_CHALLENGE_FAILED: 'MFA fallido',
+    OAUTH2_LOGIN: 'Login social',
   };
 
   constructor(private adminService: AdminService) {}
@@ -107,9 +133,51 @@ export class AuditLogsComponent implements OnInit {
       case 'LOGIN_FAILED': return 'bg-red-100 text-red-800';
       case 'TOKEN_THEFT_DETECTED': return 'bg-red-200 text-red-900 font-semibold';
       case 'LOGOUT': return 'bg-gray-100 text-gray-700';
-      case 'USER_REGISTERED': return 'bg-blue-100 text-blue-800';
+      case 'USER_REGISTERED':
+      case 'USER_CREATED': return 'bg-blue-100 text-blue-800';
+      case 'USER_DELETED':
+      case 'ROLE_DELETED':
+      case 'FEATURE_FLAG_DELETED':
+      case 'SYSTEM_CONFIG_DELETED': return 'bg-red-100 text-red-800';
+      case 'USER_BLOCKED': return 'bg-orange-100 text-orange-800';
+      case 'USER_UNBLOCKED': return 'bg-green-100 text-green-700';
+      case 'ROLE_CREATED':
+      case 'FEATURE_FLAG_CREATED':
+      case 'SYSTEM_CONFIG_CREATED': return 'bg-teal-100 text-teal-800';
+      case 'ROLE_UPDATED':
+      case 'USER_UPDATED':
+      case 'SYSTEM_CONFIG_UPDATED': return 'bg-yellow-100 text-yellow-800';
+      case 'FEATURE_FLAG_TOGGLED': return 'bg-purple-100 text-purple-800';
+      case 'PASSWORD_CHANGED': return 'bg-amber-100 text-amber-800';
+      case 'MFA_ENABLED':
+      case 'MFA_CHALLENGE_VERIFIED': return 'bg-indigo-100 text-indigo-800';
+      case 'MFA_DISABLED': return 'bg-gray-100 text-gray-700';
+      case 'MFA_CHALLENGE_FAILED': return 'bg-red-100 text-red-800';
+      case 'OAUTH2_LOGIN': return 'bg-sky-100 text-sky-800';
       default: return 'bg-indigo-100 text-indigo-800';
     }
+  }
+
+  exportCsv(): void {
+    const filters: Omit<AuditLogFilters, 'page' | 'size'> = {};
+    if (this.selectedAction) filters.action = this.selectedAction;
+    if (this.performedBy.trim()) filters.performedBy = this.performedBy.trim();
+    if (this.dateFrom) filters.dateFrom = new Date(this.dateFrom).toISOString();
+    if (this.dateTo) filters.dateTo = new Date(this.dateTo + 'T23:59:59').toISOString();
+
+    this.adminService.exportAuditLogs(filters).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'audit-logs.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err: BackendError) => {
+        this.error.set(err.message ?? 'Error al exportar');
+      },
+    });
   }
 
   formatDate(iso: string): string {

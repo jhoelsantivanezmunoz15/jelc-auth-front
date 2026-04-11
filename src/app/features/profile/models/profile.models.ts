@@ -13,3 +13,17 @@ export interface ActiveSession {
   expiresAt: string;
   metadata: Record<string, unknown>;
 }
+
+export interface MfaSetupData {
+  secret: string;
+  qrUri: string;
+  alreadyEnabled: boolean;
+}
+
+export interface EnableMfaRequest {
+  code: string;
+}
+
+export interface DisableMfaRequest {
+  currentPassword: string;
+}

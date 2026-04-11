@@ -5,6 +5,7 @@ import {
   ConfirmationTokenRequest,
   LoginRequest,
   LogoutRequest,
+  MfaSetupResponse,
   RegisterRequest,
   ResetPasswordRequest,
   TokenResponse,
@@ -32,6 +33,18 @@ export class AuthService {
 
   login(body: LoginRequest): Observable<TokenResponse> {
     return this.http.post<ApiResponse<TokenResponse>>(`${this.base}/login`, body).pipe(
+      map(res => res.data),
+      tap(res => {
+        if (!res.mfaRequired) {
+          this.tokenService.setTokens(res.accessToken, res.refreshToken);
+          this.authState.setSession(res.expiresAt);
+        }
+      })
+    );
+  }
+
+  verifyMfa(challengeToken: string, code: string): Observable<TokenResponse> {
+    return this.http.post<ApiResponse<TokenResponse>>(`${this.base}/mfa/verify`, { challengeToken, code }).pipe(
       map(res => res.data),
       tap(res => {
         this.tokenService.setTokens(res.accessToken, res.refreshToken);

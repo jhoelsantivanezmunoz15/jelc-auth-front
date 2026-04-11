@@ -1,11 +1,14 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import QRCode from 'qrcode';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
 import { User } from '../../../../core/models/user.models';
+import { FeatureFlagStateService } from '../../../../core/services/feature-flag-state.service';
 import { ProfileService } from '../../services/profile.service';
-import { ActiveSession, ChangePasswordRequest, UpdateProfileRequest } from '../../models/profile.models';
+import { ActiveSession, ChangePasswordRequest, DisableMfaRequest, EnableMfaRequest, MfaSetupData, UpdateProfileRequest } from '../../models/profile.models';
 
-type Tab = 'info' | 'password' | 'sessions';
+type Tab = 'info' | 'password' | 'sessions' | 'mfa';
+type MfaStep = 'status' | 'setup' | 'enable' | 'disable';
 
 @Component({
   selector: 'app-profile',
@@ -37,8 +40,27 @@ export class ProfileComponent implements OnInit {
   loadingSessions = signal(false);
   sessionsError = signal<string | null>(null);
   revokingId = signal<string | null>(null);
+  revokingAll = signal(false);
 
-  constructor(private profileService: ProfileService) {}
+  // ─── MFA ─────────────────────────────────────────────────────────────────
+  mfaStep = signal<MfaStep>('status');
+  mfaSetup = signal<MfaSetupData | null>(null);
+  mfaLoading = signal(false);
+  mfaError = signal<string | null>(null);
+  mfaSuccess = signal<string | null>(null);
+  enableForm: EnableMfaRequest = { code: '' };
+  disableForm: DisableMfaRequest = { currentPassword: '' };
+
+  mfaQrDataUrl = signal<string | null>(null);
+
+  readonly mfaEnabled;
+
+  constructor(
+    private profileService: ProfileService,
+    private ff: FeatureFlagStateService
+  ) {
+    this.mfaEnabled = this.ff.mfaEnabled;
+  }
 
   ngOnInit(): void {
     this.loadProfile();
@@ -115,8 +137,6 @@ export class ProfileComponent implements OnInit {
 
   // ─── Sessions ────────────────────────────────────────────────────────────
 
-  revokingAll = signal(false);
-
   revokeAllSessions(): void {
     if (!confirm('¿Cerrar todas las sesiones activas? Tendrás que volver a iniciar sesión.')) return;
     this.revokingAll.set(true);
@@ -162,6 +182,85 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  // ─── MFA ─────────────────────────────────────────────────────────────────
+
+  startSetup(): void {
+    this.mfaError.set(null);
+    this.mfaLoading.set(true);
+    this.profileService.setupMfa().subscribe({
+      next: res => {
+        this.mfaSetup.set(res.data);
+        this.mfaStep.set('setup');
+        this.mfaLoading.set(false);
+        QRCode.toDataURL(res.data.qrUri, {
+          width: 220,
+          margin: 2,
+          color: { dark: '#1e1b4b', light: '#ffffff' },
+        }).then(url => this.mfaQrDataUrl.set(url));
+      },
+      error: (err: BackendError) => {
+        this.mfaError.set(err.message);
+        this.mfaLoading.set(false);
+      },
+    });
+  }
+
+  confirmEnable(): void {
+    if (!this.enableForm.code || this.enableForm.code.length !== 6) return;
+    this.mfaError.set(null);
+    this.mfaLoading.set(true);
+    this.profileService.enableMfa(this.enableForm).subscribe({
+      next: () => {
+        this.mfaLoading.set(false);
+        this.enableForm = { code: '' };
+        this.mfaSetup.set(null);
+        this.mfaQrDataUrl.set(null);
+        this.mfaStep.set('status');
+        this.loadProfile();
+        this.showMfaSuccess('MFA activado correctamente');
+      },
+      error: (err: BackendError) => {
+        this.mfaError.set(err.message);
+        this.mfaLoading.set(false);
+      },
+    });
+  }
+
+  startDisable(): void {
+    this.mfaStep.set('disable');
+    this.mfaError.set(null);
+    this.disableForm = { currentPassword: '' };
+  }
+
+  confirmDisable(): void {
+    if (!this.disableForm.currentPassword) return;
+    this.mfaError.set(null);
+    this.mfaLoading.set(true);
+    this.profileService.disableMfa(this.disableForm).subscribe({
+      next: () => {
+        this.mfaLoading.set(false);
+        this.disableForm = { currentPassword: '' };
+        this.mfaStep.set('status');
+        this.loadProfile();
+        this.showMfaSuccess('MFA desactivado correctamente');
+      },
+      error: (err: BackendError) => {
+        this.mfaError.set(err.message);
+        this.mfaLoading.set(false);
+      },
+    });
+  }
+
+  cancelMfaAction(): void {
+    this.mfaStep.set('status');
+    this.mfaError.set(null);
+    this.enableForm = { code: '' };
+    this.disableForm = { currentPassword: '' };
+    this.mfaQrDataUrl.set(null);
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────
+
   formatDate(iso: string): string {
     return new Date(iso).toLocaleString('es', { dateStyle: 'short', timeStyle: 'medium' });
   }
@@ -183,5 +282,10 @@ export class ProfileComponent implements OnInit {
   private showPasswordSuccess(msg: string): void {
     this.passwordSuccess.set(msg);
     setTimeout(() => this.passwordSuccess.set(null), 3000);
+  }
+
+  private showMfaSuccess(msg: string): void {
+    this.mfaSuccess.set(msg);
+    setTimeout(() => this.mfaSuccess.set(null), 3000);
   }
 }

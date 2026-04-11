@@ -1,18 +1,23 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { BackendError } from '../../../../core/interceptors/error.interceptor';
 import { AuthStateService } from '../../../../core/services/auth-state.service';
-import { MenuStateService } from '../../../../core/services/menu-state.service';
+import { DashboardService } from '../../services/dashboard.service';
+import { DashboardStats } from '../../models/dashboard.models';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {
 
-  // ─── Saludo según la hora del día ────────────────────────────────────────
+  stats = signal<DashboardStats | null>(null);
+  loading = signal(true);
+  error = signal<string | null>(null);
+
   readonly greeting: string = (() => {
     const h = new Date().getHours();
     if (h < 12) return 'Buenos días';
@@ -20,43 +25,44 @@ export class DashboardComponent implements OnInit {
     return 'Buenas noches';
   })();
 
-  // ─── Estadísticas de sesión ───────────────────────────────────────────────
-  readonly roleCount = computed(() => this.authState.currentRoles().length);
-  readonly permissionCount = computed(() => this.authState.currentPermissions().length);
-  readonly moduleCount = computed(() => this.menuState.tree().length);
-
-  // ─── Tiempo restante del token ────────────────────────────────────────────
-  readonly tokenExpiresIn = signal('–');
-  readonly tokenExpired = signal(false);
-
-  // ─── Acceso rápido (nodos raíz del menú que tienen ruta) ─────────────────
-  readonly quickAccessItems = computed(() =>
-    this.menuState.tree().filter(n => !!n.route)
-  );
-
   constructor(
     public authState: AuthStateService,
-    public menuState: MenuStateService,
+    private dashboardService: DashboardService,
   ) {}
 
   ngOnInit(): void {
-    this.menuState.load().subscribe();
-    this.computeTokenExpiry();
+    this.dashboardService.getStats().subscribe({
+      next: res => {
+        this.stats.set(res.data);
+        this.loading.set(false);
+      },
+      error: (err: BackendError) => {
+        this.loading.set(false);
+        if (err.status !== 403) {
+          this.error.set('No se pudieron cargar las estadísticas del sistema.');
+        }
+        // 403: usuario sin permisos de admin — simplemente no mostrar stats
+      },
+    });
   }
 
-  private computeTokenExpiry(): void {
-    const expiresAt = this.authState.session()?.expiresAt;
-    if (!expiresAt) return;
-
-    const diffMs = new Date(expiresAt).getTime() - Date.now();
-    if (diffMs <= 0) {
-      this.tokenExpired.set(true);
-      this.tokenExpiresIn.set('Expirado');
-      return;
+  actionClass(action: string): string {
+    if (action.includes('FAILED') || action.includes('DELETED') || action.includes('BLOCKED')) {
+      return 'bg-red-100 text-red-800';
     }
+    if (action.includes('CREATED') || action.includes('REGISTERED') || action.includes('SUCCESS')) {
+      return 'bg-green-100 text-green-800';
+    }
+    if (action.includes('UPDATED') || action.includes('TOGGLED') || action.includes('CHANGED')) {
+      return 'bg-yellow-100 text-yellow-800';
+    }
+    if (action.includes('THEFT') || action.includes('LOCKED')) {
+      return 'bg-red-200 text-red-900 font-semibold';
+    }
+    return 'bg-gray-100 text-gray-700';
+  }
 
-    const h = Math.floor(diffMs / 3_600_000);
-    const m = Math.floor((diffMs % 3_600_000) / 60_000);
-    this.tokenExpiresIn.set(h > 0 ? `${h}h ${m}m` : `${m}m`);
+  formatDate(iso: string): string {
+    return new Date(iso).toLocaleString('es', { dateStyle: 'short', timeStyle: 'short' });
   }
 }

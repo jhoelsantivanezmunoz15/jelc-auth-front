@@ -72,4 +72,13 @@ export class AdminService {
     if (filters.dateTo) params = params.set('dateTo', filters.dateTo);
     return this.http.get<ApiResponse<PageResult<AuditLog>>>(this.auditBase, { params });
   }
+
+  exportAuditLogs(filters: Omit<AuditLogFilters, 'page' | 'size'>): Observable<Blob> {
+    let params = new HttpParams();
+    if (filters.action) params = params.set('action', filters.action);
+    if (filters.performedBy) params = params.set('performedBy', filters.performedBy);
+    if (filters.dateFrom) params = params.set('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params = params.set('dateTo', filters.dateTo);
+    return this.http.get(`${this.auditBase}/export`, { params, responseType: 'blob' });
+  }
 }

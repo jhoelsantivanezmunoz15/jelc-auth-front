@@ -19,6 +19,7 @@ export class FeatureFlagStateService {
   readonly registrationOpen = computed(() => this._flags()['REGISTRATION_OPEN'] ?? true);
   readonly emailVerification = computed(() => this._flags()['EMAIL_VERIFICATION'] ?? true);
   readonly passwordResetEnabled = computed(() => this._flags()['PASSWORD_RESET_ENABLED'] ?? true);
+  readonly mfaEnabled = computed(() => this._flags()['MFA_ENABLED'] ?? false);
 
   constructor(private http: HttpClient) {}
 

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../core/models/role.models';
 import { User } from '../../../core/models/user.models';
-import { ActiveSession, ChangePasswordRequest, UpdateProfileRequest } from '../models/profile.models';
+import { ActiveSession, ChangePasswordRequest, DisableMfaRequest, EnableMfaRequest, MfaSetupData, UpdateProfileRequest } from '../models/profile.models';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -34,5 +34,17 @@ export class ProfileService {
 
   revokeAllSessions(): Observable<ApiResponse<void>> {
     return this.http.post<ApiResponse<void>>(`${environment.apiUrl}/auth/revoke-all-token`, {});
+  }
+
+  setupMfa(): Observable<ApiResponse<MfaSetupData>> {
+    return this.http.get<ApiResponse<MfaSetupData>>(`${this.base}/mfa/setup`);
+  }
+
+  enableMfa(body: EnableMfaRequest): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.base}/mfa/enable`, body);
+  }
+
+  disableMfa(body: DisableMfaRequest): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.base}/mfa/disable`, { body });
   }
 }

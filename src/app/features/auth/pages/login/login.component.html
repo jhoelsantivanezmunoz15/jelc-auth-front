@@ -1,40 +1,87 @@
 <div class="min-h-screen bg-slate-50 flex items-center justify-center px-4">
   <div class="w-full max-w-sm bg-white rounded-xl shadow-md p-8">
-    <h2 class="text-2xl font-bold text-center mb-6">Iniciar sesión</h2>
 
-    @if (error()) {
-      <div class="mb-4 px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ error() }}</div>
-    }
+    <!-- ── Credentials step ── -->
+    @if (step() === 'credentials') {
+      <h2 class="text-2xl font-bold text-center mb-6">Iniciar sesión</h2>
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <div class="mb-4">
-        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <input id="email" type="email" formControlName="email" placeholder="correo@ejemplo.com"
-               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
-        @if (form.get('email')?.invalid && form.get('email')?.touched) {
-          <span class="block mt-1 text-xs text-red-600">Email inválido</span>
+      @if (error()) {
+        <div class="mb-4 px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ error() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="mb-4">
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input id="email" type="email" formControlName="email" placeholder="correo@ejemplo.com"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+          @if (form.get('email')?.invalid && form.get('email')?.touched) {
+            <span class="block mt-1 text-xs text-red-600">Email inválido</span>
+          }
+        </div>
+
+        <div class="mb-6">
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+          <input id="password" type="password" formControlName="password"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+
+        <button type="submit" [disabled]="form.invalid || loading()"
+                class="w-full py-2 px-4 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors">
+          {{ loading() ? 'Verificando...' : 'Ingresar' }}
+        </button>
+      </form>
+
+      <div class="mt-4 text-center text-sm space-y-1">
+        @if (passwordResetEnabled()) {
+          <p><a routerLink="/auth/reset-password" class="text-indigo-600 hover:underline">¿Olvidaste tu contraseña?</a></p>
+        }
+        @if (registrationOpen()) {
+          <p class="text-gray-500">¿No tienes cuenta? <a routerLink="/auth/register" class="text-indigo-600 hover:underline">Regístrate</a></p>
         }
       </div>
+    }
 
-      <div class="mb-6">
-        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-        <input id="password" type="password" formControlName="password"
-               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+    <!-- ── MFA step ── -->
+    @if (step() === 'mfa') {
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-3">
+          <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900">Verificación en dos pasos</h2>
+        <p class="text-sm text-gray-500 mt-1">Ingresa el código de 6 dígitos de tu aplicación autenticadora</p>
       </div>
 
-      <button type="submit" [disabled]="form.invalid || loading()"
-              class="w-full py-2 px-4 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors">
-        {{ loading() ? 'Ingresando...' : 'Ingresar' }}
-      </button>
-    </form>
+      @if (error()) {
+        <div class="mb-4 px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ error() }}</div>
+      }
 
-    <div class="mt-4 text-center text-sm space-y-1">
-      @if (passwordResetEnabled()) {
-        <p><a routerLink="/auth/reset-password" class="text-indigo-600 hover:underline">¿Olvidaste tu contraseña?</a></p>
-      }
-      @if (registrationOpen()) {
-        <p class="text-gray-500">¿No tienes cuenta? <a routerLink="/auth/register" class="text-indigo-600 hover:underline">Regístrate</a></p>
-      }
-    </div>
+      <form [formGroup]="mfaForm" (ngSubmit)="submitMfa()">
+        <div class="mb-6">
+          <label for="code" class="block text-sm font-medium text-gray-700 mb-1">Código de autenticación</label>
+          <input id="code" type="text" formControlName="code" placeholder="000000"
+                 inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+                 class="w-full px-3 py-2 text-sm text-center tracking-[0.5em] border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+          @if (mfaForm.get('code')?.invalid && mfaForm.get('code')?.touched) {
+            <span class="block mt-1 text-xs text-red-600">Ingresa un código de 6 dígitos</span>
+          }
+        </div>
+
+        <button type="submit" [disabled]="mfaForm.invalid || loading()"
+                class="w-full py-2 px-4 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors">
+          {{ loading() ? 'Verificando...' : 'Verificar' }}
+        </button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <button (click)="backToCredentials()"
+                class="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">
+          ← Volver al inicio de sesión
+        </button>
+      </div>
+    }
+
   </div>
 </div>

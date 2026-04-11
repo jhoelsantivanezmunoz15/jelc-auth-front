@@ -35,6 +35,14 @@ export interface TokenResponse {
   accessToken: string;
   refreshToken: string;
   expiresAt: string;
+  mfaRequired: boolean;
+  challengeToken: string;
+}
+
+export interface MfaSetupResponse {
+  secret: string;
+  qrUri: string;
+  alreadyEnabled: boolean;
 }
 
 export interface VoidResponse {

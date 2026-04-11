@@ -31,6 +31,7 @@ export class AuditLogsComponent implements OnInit {
     'ROLE_CREATED', 'ROLE_UPDATED', 'ROLE_DELETED',
     'FEATURE_FLAG_CREATED', 'FEATURE_FLAG_TOGGLED', 'FEATURE_FLAG_DELETED',
     'SYSTEM_CONFIG_CREATED', 'SYSTEM_CONFIG_UPDATED', 'SYSTEM_CONFIG_DELETED',
+    'MFA_ENABLED', 'MFA_DISABLED', 'MFA_CHALLENGE_VERIFIED', 'MFA_CHALLENGE_FAILED',
   ];
 
   readonly actionLabels: Record<AuditAction, string> = {
@@ -58,6 +59,10 @@ export class AuditLogsComponent implements OnInit {
     SYSTEM_CONFIG_CREATED: 'Config. creada',
     SYSTEM_CONFIG_UPDATED: 'Config. actualizada',
     SYSTEM_CONFIG_DELETED: 'Config. eliminada',
+    MFA_ENABLED: 'MFA activado',
+    MFA_DISABLED: 'MFA desactivado',
+    MFA_CHALLENGE_VERIFIED: 'MFA verificado',
+    MFA_CHALLENGE_FAILED: 'MFA fallido',
   };
 
   constructor(private adminService: AdminService) {}
@@ -142,6 +147,10 @@ export class AuditLogsComponent implements OnInit {
       case 'SYSTEM_CONFIG_UPDATED': return 'bg-yellow-100 text-yellow-800';
       case 'FEATURE_FLAG_TOGGLED': return 'bg-purple-100 text-purple-800';
       case 'PASSWORD_CHANGED': return 'bg-amber-100 text-amber-800';
+      case 'MFA_ENABLED':
+      case 'MFA_CHALLENGE_VERIFIED': return 'bg-indigo-100 text-indigo-800';
+      case 'MFA_DISABLED': return 'bg-gray-100 text-gray-700';
+      case 'MFA_CHALLENGE_FAILED': return 'bg-red-100 text-red-800';
       default: return 'bg-indigo-100 text-indigo-800';
     }
   }

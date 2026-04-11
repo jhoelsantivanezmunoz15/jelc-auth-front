@@ -69,7 +69,12 @@ export type AuditAction =
   // System config
   | 'SYSTEM_CONFIG_CREATED'
   | 'SYSTEM_CONFIG_UPDATED'
-  | 'SYSTEM_CONFIG_DELETED';
+  | 'SYSTEM_CONFIG_DELETED'
+  // MFA
+  | 'MFA_ENABLED'
+  | 'MFA_DISABLED'
+  | 'MFA_CHALLENGE_VERIFIED'
+  | 'MFA_CHALLENGE_FAILED';
 
 export interface AuditLog {
   id: string;

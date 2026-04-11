@@ -166,10 +166,12 @@
                   } @else {
                     <span class="text-xs text-gray-400 italic">Solo lectura</span>
                   }
-                  <button (click)="delete(config)"
-                          class="px-3 py-1 text-xs text-white bg-red-600 rounded-md hover:bg-red-700 cursor-pointer transition-colors">
-                    Eliminar
-                  </button>
+                  @if (config.deletable) {
+                    <button (click)="delete(config)"
+                            class="px-3 py-1 text-xs text-white bg-red-600 rounded-md hover:bg-red-700 cursor-pointer transition-colors">
+                      Eliminar
+                    </button>
+                  }
                 </div>
               </td>
             </tr>

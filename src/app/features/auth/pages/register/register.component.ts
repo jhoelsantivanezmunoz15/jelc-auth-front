@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
+import { FeatureFlagStateService } from '../../../../core/services/feature-flag-state.service';
 
 @Component({
   selector: 'app-register',
@@ -15,11 +16,15 @@ export class RegisterComponent {
   loading = signal(false);
   error = signal<string | null>(null);
 
+  readonly registrationOpen;
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private ff: FeatureFlagStateService
   ) {
+    this.registrationOpen = this.ff.registrationOpen;
     this.form = this.fb.group({
       firstName: ['', [Validators.required, Validators.maxLength(100)]],
       lastName: ['', [Validators.required, Validators.maxLength(100)]],

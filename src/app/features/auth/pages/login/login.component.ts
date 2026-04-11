@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
+import { FeatureFlagStateService } from '../../../../core/services/feature-flag-state.service';
 
 @Component({
   selector: 'app-login',
@@ -15,11 +16,17 @@ export class LoginComponent {
   loading = signal(false);
   error = signal<string | null>(null);
 
+  readonly registrationOpen;
+  readonly passwordResetEnabled;
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private ff: FeatureFlagStateService
   ) {
+    this.registrationOpen = this.ff.registrationOpen;
+    this.passwordResetEnabled = this.ff.passwordResetEnabled;
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]],

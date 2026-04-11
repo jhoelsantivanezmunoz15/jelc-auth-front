@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import {
   ConfirmationTokenRequest,
   LoginRequest,
@@ -14,6 +14,12 @@ import { AuthStateService } from '../../../core/services/auth-state.service';
 import { TokenService } from '../../../core/services/token.service';
 import { environment } from '../../../../environments/environment';
 
+interface ApiResponse<T> {
+  status: string;
+  message: string;
+  data: T;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly base = `${environment.apiUrl}/auth`;
@@ -25,7 +31,8 @@ export class AuthService {
   ) {}
 
   login(body: LoginRequest): Observable<TokenResponse> {
-    return this.http.post<TokenResponse>(`${this.base}/login`, body).pipe(
+    return this.http.post<ApiResponse<TokenResponse>>(`${this.base}/login`, body).pipe(
+      map(res => res.data),
       tap(res => {
         this.tokenService.setTokens(res.accessToken, res.refreshToken);
         this.authState.setSession(res.expiresAt);
@@ -34,7 +41,8 @@ export class AuthService {
   }
 
   register(body: RegisterRequest): Observable<TokenResponse> {
-    return this.http.post<TokenResponse>(`${this.base}/register`, body).pipe(
+    return this.http.post<ApiResponse<TokenResponse>>(`${this.base}/register`, body).pipe(
+      map(res => res.data),
       tap(res => {
         this.tokenService.setTokens(res.accessToken, res.refreshToken);
         this.authState.setSession(res.expiresAt);
@@ -43,27 +51,35 @@ export class AuthService {
   }
 
   registerFinalUser(body: RegisterRequest): Observable<VoidResponse> {
-    return this.http.post<VoidResponse>(`${this.base}/register-final-user`, body);
+    return this.http.post<ApiResponse<VoidResponse>>(`${this.base}/register-final-user`, body).pipe(
+      map(res => res.data)
+    );
   }
 
   resetPassword(body: ResetPasswordRequest): Observable<VoidResponse> {
-    return this.http.post<VoidResponse>(`${this.base}/reset-password`, body);
+    return this.http.post<ApiResponse<VoidResponse>>(`${this.base}/reset-password`, body).pipe(
+      map(res => res.data)
+    );
   }
 
   confirmToken(body: ConfirmationTokenRequest): Observable<VoidResponse> {
-    return this.http.post<VoidResponse>(`${this.base}/confirmation-token`, body);
+    return this.http.post<ApiResponse<VoidResponse>>(`${this.base}/confirmation-token`, body).pipe(
+      map(res => res.data)
+    );
   }
 
   logout(): Observable<VoidResponse> {
     const refreshToken = this.tokenService.getRefreshToken() ?? '';
     const body: LogoutRequest = { refreshToken };
-    return this.http.post<VoidResponse>(`${this.base}/logout`, body).pipe(
+    return this.http.post<ApiResponse<VoidResponse>>(`${this.base}/logout`, body).pipe(
+      map(res => res.data),
       tap(() => this.authState.clearSession())
     );
   }
 
   revokeAllTokens(): Observable<VoidResponse> {
-    return this.http.post<VoidResponse>(`${this.base}/revoke-all-token`, {}).pipe(
+    return this.http.post<ApiResponse<VoidResponse>>(`${this.base}/revoke-all-token`, {}).pipe(
+      map(res => res.data),
       tap(() => this.authState.clearSession())
     );
   }

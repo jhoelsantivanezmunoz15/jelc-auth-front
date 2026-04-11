@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MenuStateService } from '../../core/services/menu-state.service';
 import { MenuItemComponent } from './menu-item/menu-item.component';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [MenuItemComponent],
+  imports: [MenuItemComponent, RouterLink],
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent implements OnInit {

@@ -1,0 +1,38 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import { ApiResponse } from '../../../core/models/role.models';
+import { User } from '../../../core/models/user.models';
+import { ActiveSession, ChangePasswordRequest, UpdateProfileRequest } from '../models/profile.models';
+
+@Injectable({ providedIn: 'root' })
+export class ProfileService {
+  private readonly base = `${environment.apiUrl}/api/v1/profile`;
+
+  constructor(private http: HttpClient) {}
+
+  getProfile(): Observable<ApiResponse<User>> {
+    return this.http.get<ApiResponse<User>>(this.base);
+  }
+
+  updateProfile(body: UpdateProfileRequest): Observable<ApiResponse<User>> {
+    return this.http.put<ApiResponse<User>>(this.base, body);
+  }
+
+  changePassword(body: ChangePasswordRequest): Observable<ApiResponse<void>> {
+    return this.http.put<ApiResponse<void>>(`${this.base}/password`, body);
+  }
+
+  getSessions(): Observable<ApiResponse<ActiveSession[]>> {
+    return this.http.get<ApiResponse<ActiveSession[]>>(`${this.base}/sessions`);
+  }
+
+  revokeSession(tokenId: string): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.base}/sessions/${tokenId}`);
+  }
+
+  revokeAllSessions(): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${environment.apiUrl}/auth/revoke-all-token`, {});
+  }
+}

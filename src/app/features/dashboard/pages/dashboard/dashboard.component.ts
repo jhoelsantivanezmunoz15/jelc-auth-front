@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { BackendError } from '../../../../core/interceptors/error.interceptor';
 import { AuthStateService } from '../../../../core/services/auth-state.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { DashboardStats } from '../../models/dashboard.models';
@@ -35,9 +36,12 @@ export class DashboardComponent implements OnInit {
         this.stats.set(res.data);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set('No se pudieron cargar las estadísticas del sistema.');
+      error: (err: BackendError) => {
         this.loading.set(false);
+        if (err.status !== 403) {
+          this.error.set('No se pudieron cargar las estadísticas del sistema.');
+        }
+        // 403: usuario sin permisos de admin — simplemente no mostrar stats
       },
     });
   }

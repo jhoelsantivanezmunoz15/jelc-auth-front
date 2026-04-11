@@ -5,6 +5,7 @@ import { catchError, throwError } from 'rxjs';
 import { AuthStateService } from '../services/auth-state.service';
 
 export interface BackendError {
+  status: number;
   message: string;
   exception: string;
   path: string;
@@ -21,6 +22,7 @@ export const errorInterceptor: HttpInterceptorFn = (
   return next(req).pipe(
     catchError(err => {
       const backendError: BackendError = {
+        status: err.status,
         message: err.error?.message ?? 'Error inesperado',
         exception: err.error?.exception ?? '',
         path: err.error?.path ?? req.url,
@@ -30,10 +32,6 @@ export const errorInterceptor: HttpInterceptorFn = (
       if (err.status === 401) {
         authState.clearSession();
         router.navigate(['/auth/login']);
-      }
-
-      if (err.status === 403) {
-        router.navigate(['/dashboard']);
       }
 
       if (err.status === 0) {

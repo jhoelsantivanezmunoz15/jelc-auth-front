@@ -24,5 +24,10 @@ export const AUTH_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/confirm-token/confirm-token.component').then(m => m.ConfirmTokenComponent),
   },
+  {
+    path: 'oauth2-callback',
+    loadComponent: () =>
+      import('./pages/oauth2-callback/oauth2-callback.component').then(m => m.OAuth2CallbackComponent),
+  },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

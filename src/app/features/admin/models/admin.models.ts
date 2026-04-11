@@ -74,7 +74,9 @@ export type AuditAction =
   | 'MFA_ENABLED'
   | 'MFA_DISABLED'
   | 'MFA_CHALLENGE_VERIFIED'
-  | 'MFA_CHALLENGE_FAILED';
+  | 'MFA_CHALLENGE_FAILED'
+  // OAuth2
+  | 'OAUTH2_LOGIN';
 
 export interface AuditLog {
   id: string;

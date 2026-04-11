@@ -1,9 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
 import { FeatureFlagStateService } from '../../../../core/services/feature-flag-state.service';
+import { environment } from '../../../../../environments/environment';
 
 type LoginStep = 'credentials' | 'mfa';
 
@@ -13,7 +14,7 @@ type LoginStep = 'credentials' | 'mfa';
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   step = signal<LoginStep>('credentials');
   form: FormGroup;
   mfaForm: FormGroup;
@@ -24,6 +25,7 @@ export class LoginComponent {
 
   readonly registrationOpen;
   readonly passwordResetEnabled;
+  readonly oauth2Enabled;
 
   constructor(
     private fb: FormBuilder,
@@ -33,6 +35,7 @@ export class LoginComponent {
   ) {
     this.registrationOpen = this.ff.registrationOpen;
     this.passwordResetEnabled = this.ff.passwordResetEnabled;
+    this.oauth2Enabled = this.ff.oauth2Enabled;
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]],
@@ -40,6 +43,10 @@ export class LoginComponent {
     this.mfaForm = this.fb.group({
       code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6), Validators.pattern(/^\d{6}$/)]],
     });
+  }
+
+  ngOnInit(): void {
+    this.ff.load();
   }
 
   submit(): void {
@@ -83,5 +90,9 @@ export class LoginComponent {
     this.challengeToken = '';
     this.mfaForm.reset();
     this.error.set(null);
+  }
+
+  loginWithGoogle(): void {
+    window.location.href = `${environment.apiUrl}/oauth2/authorization/google`;
   }
 }

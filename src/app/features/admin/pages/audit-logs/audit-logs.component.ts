@@ -32,6 +32,7 @@ export class AuditLogsComponent implements OnInit {
     'FEATURE_FLAG_CREATED', 'FEATURE_FLAG_TOGGLED', 'FEATURE_FLAG_DELETED',
     'SYSTEM_CONFIG_CREATED', 'SYSTEM_CONFIG_UPDATED', 'SYSTEM_CONFIG_DELETED',
     'MFA_ENABLED', 'MFA_DISABLED', 'MFA_CHALLENGE_VERIFIED', 'MFA_CHALLENGE_FAILED',
+    'OAUTH2_LOGIN',
   ];
 
   readonly actionLabels: Record<AuditAction, string> = {
@@ -63,6 +64,7 @@ export class AuditLogsComponent implements OnInit {
     MFA_DISABLED: 'MFA desactivado',
     MFA_CHALLENGE_VERIFIED: 'MFA verificado',
     MFA_CHALLENGE_FAILED: 'MFA fallido',
+    OAUTH2_LOGIN: 'Login social',
   };
 
   constructor(private adminService: AdminService) {}
@@ -151,6 +153,7 @@ export class AuditLogsComponent implements OnInit {
       case 'MFA_CHALLENGE_VERIFIED': return 'bg-indigo-100 text-indigo-800';
       case 'MFA_DISABLED': return 'bg-gray-100 text-gray-700';
       case 'MFA_CHALLENGE_FAILED': return 'bg-red-100 text-red-800';
+      case 'OAUTH2_LOGIN': return 'bg-sky-100 text-sky-800';
       default: return 'bg-indigo-100 text-indigo-800';
     }
   }

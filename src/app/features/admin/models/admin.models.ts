@@ -19,6 +19,7 @@ export interface SystemConfig {
   category: ConfigCategory;
   description: string | null;
   editable: boolean;
+  deletable: boolean;
 }
 
 export interface CreateFeatureFlagRequest {

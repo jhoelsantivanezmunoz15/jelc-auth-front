@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { menuGuard } from './core/guards/menu.guard';
+import { featureFlagGuard } from './core/guards/feature-flag.guard';
 
 export const routes: Routes = [
   // ─── Rutas públicas ──────────────────────────────────────────────────────
@@ -34,13 +35,15 @@ export const routes: Routes = [
       // para que el acceso se conceda/revoque automáticamente.
       {
         path: 'roles',
-        canActivate: [menuGuard],
+        canActivate: [menuGuard, featureFlagGuard],
+        data: { featureFlag: 'ROLE_MANAGEMENT' },
         loadChildren: () =>
           import('./features/roles/roles.routes').then(m => m.ROLES_ROUTES),
       },
       {
         path: 'users',
-        canActivate: [menuGuard],
+        canActivate: [menuGuard, featureFlagGuard],
+        data: { featureFlag: 'USER_MANAGEMENT' },
         loadChildren: () =>
           import('./features/users/users.routes').then(m => m.USERS_ROUTES),
       },

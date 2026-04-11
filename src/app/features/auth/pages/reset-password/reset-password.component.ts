@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
+import { FeatureFlagStateService } from '../../../../core/services/feature-flag-state.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -16,7 +17,10 @@ export class ResetPasswordComponent {
   error = signal<string | null>(null);
   success = signal(false);
 
-  constructor(private fb: FormBuilder, private authService: AuthService) {
+  readonly passwordResetEnabled;
+
+  constructor(private fb: FormBuilder, private authService: AuthService, private ff: FeatureFlagStateService) {
+    this.passwordResetEnabled = this.ff.passwordResetEnabled;
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
     });

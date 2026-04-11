@@ -38,4 +38,36 @@ export interface CreateSystemConfigRequest {
   editable: boolean;
 }
 
+// ─── Audit Logs ─────────────────────────────────────────────────────────────
+
+export type AuditAction =
+  | 'LOGIN_SUCCESS'
+  | 'LOGIN_FAILED'
+  | 'LOGOUT'
+  | 'TOKEN_REFRESH'
+  | 'TOKEN_THEFT_DETECTED'
+  | 'USER_REGISTERED'
+  | 'EMAIL_CONFIRMED'
+  | 'PASSWORD_RESET_REQUESTED'
+  | 'PASSWORD_RESET_COMPLETED';
+
+export interface AuditLog {
+  id: string;
+  action: AuditAction;
+  performedBy: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  detail: string | null;
+  createdAt: string;
+}
+
+export interface AuditLogFilters {
+  action?: AuditAction;
+  performedBy?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page: number;
+  size: number;
+}
+
 export type { ApiResponse };

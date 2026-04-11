@@ -3,6 +3,13 @@ import { featureFlagGuard } from '../../core/guards/feature-flag.guard';
 
 export const ADMIN_ROUTES: Routes = [
   {
+    path: 'audit-logs',
+    canActivate: [featureFlagGuard],
+    data: { featureFlag: 'AUDIT_AUTH' },
+    loadComponent: () =>
+      import('./pages/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent),
+  },
+  {
     path: 'feature-flags',
     canActivate: [featureFlagGuard],
     data: { featureFlag: 'FEATURE_FLAG_MANAGEMENT' },

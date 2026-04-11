@@ -4,17 +4,21 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../core/models/role.models';
 import {
+  AuditLog,
+  AuditLogFilters,
   ConfigCategory,
   CreateFeatureFlagRequest,
   CreateSystemConfigRequest,
   FeatureFlag,
   SystemConfig,
 } from '../models/admin.models';
+import { PageResult } from '../../../core/models/role.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly flagsBase = `${environment.apiUrl}/api/v1/feature-flags`;
   private readonly configBase = `${environment.apiUrl}/api/v1/system-config`;
+  private readonly auditBase = `${environment.apiUrl}/api/v1/audit-logs`;
 
   constructor(private http: HttpClient) {}
 
@@ -54,5 +58,18 @@ export class AdminService {
 
   deleteConfig(id: string): Observable<ApiResponse<null>> {
     return this.http.delete<ApiResponse<null>>(`${this.configBase}/${id}`);
+  }
+
+  // ── Audit Logs ───────────────────────────────────────────────────────────
+
+  getAuditLogs(filters: AuditLogFilters): Observable<ApiResponse<PageResult<AuditLog>>> {
+    let params = new HttpParams()
+      .set('page', filters.page.toString())
+      .set('size', filters.size.toString());
+    if (filters.action) params = params.set('action', filters.action);
+    if (filters.performedBy) params = params.set('performedBy', filters.performedBy);
+    if (filters.dateFrom) params = params.set('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params = params.set('dateTo', filters.dateTo);
+    return this.http.get<ApiResponse<PageResult<AuditLog>>>(this.auditBase, { params });
   }
 }

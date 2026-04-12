@@ -5,12 +5,12 @@ import { AuthStateService } from '../services/auth-state.service';
 import { TokenService } from '../services/token.service';
 
 const PUBLIC_PATHS = [
-  '/auth/login',
-  '/auth/register',
-  '/auth/register-final-user',
-  '/auth/refresh',
-  '/auth/reset-password',
-  '/auth/confirmation-token',
+  '/api/v1/auth/login',
+  '/api/v1/auth/register',
+  '/api/v1/auth/register-final-user',
+  '/api/v1/auth/refresh',
+  '/api/v1/auth/reset-password',
+  '/api/v1/auth/confirmation-token',
 ];
 
 function isPublic(url: string): boolean {

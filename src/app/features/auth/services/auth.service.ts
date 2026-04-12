@@ -23,7 +23,7 @@ interface ApiResponse<T> {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly base = `${environment.apiUrl}/auth`;
+  private readonly base = `${environment.apiUrl}/api/v1/auth`;
 
   constructor(
     private http: HttpClient,

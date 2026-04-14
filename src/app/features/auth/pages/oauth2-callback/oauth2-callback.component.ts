@@ -12,9 +12,16 @@ import { TokenService } from '../../../../core/services/token.service';
       <div class="text-center">
         @if (error()) {
           <p class="text-red-600 text-sm">{{ error() }}</p>
-          <a href="/auth/login" class="mt-4 inline-block text-indigo-600 hover:underline text-sm">
-            Volver al inicio de sesión
-          </a>
+          <div class="mt-4 flex items-center justify-center gap-4 text-sm">
+            @if (hasSession()) {
+              <a href="/profile" class="text-indigo-600 hover:underline">
+                Volver al perfil
+              </a>
+            }
+            <a href="/auth/login" class="text-indigo-600 hover:underline">
+              Volver al inicio de sesión
+            </a>
+          </div>
         } @else {
           <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p class="mt-3 text-sm text-gray-500">Iniciando sesión...</p>
@@ -25,6 +32,7 @@ import { TokenService } from '../../../../core/services/token.service';
 })
 export class OAuth2CallbackComponent implements OnInit {
   error = signal<string | null>(null);
+  hasSession = signal(false);
 
   constructor(
     private route: ActivatedRoute,
@@ -39,6 +47,14 @@ export class OAuth2CallbackComponent implements OnInit {
     const refreshToken = params.get('refreshToken');
     const expiresAt = params.get('expiresAt');
     const error = params.get('error');
+    const linked = params.get('linked');
+
+    this.hasSession.set(this.tokenService.hasValidToken());
+
+    if (linked === 'true') {
+      this.router.navigate(['/profile'], { replaceUrl: true, queryParams: { linked: 'true' } });
+      return;
+    }
 
     if (error) {
       this.error.set(decodeURIComponent(error));
@@ -48,7 +64,11 @@ export class OAuth2CallbackComponent implements OnInit {
     if (accessToken && refreshToken && expiresAt) {
       this.tokenService.setTokens(accessToken, refreshToken);
       this.authState.setSession(expiresAt);
-      this.router.navigate(['/dashboard'], { replaceUrl: true });
+      if (this.authState.mustChangePassword()) {
+        this.router.navigate(['/auth/force-change-password'], { replaceUrl: true });
+      } else {
+        this.router.navigate(['/dashboard'], { replaceUrl: true });
+      }
     } else {
       this.error.set('Error al procesar el inicio de sesión social');
     }

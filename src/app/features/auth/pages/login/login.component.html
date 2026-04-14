@@ -3,7 +3,11 @@
 
     <!-- ── Credentials step ── -->
     @if (step() === 'credentials') {
-      <h2 class="text-2xl font-bold text-center mb-6">Iniciar sesión</h2>
+      <h2 class="text-2xl font-bold text-center mb-4">Iniciar sesion</h2>
+
+      @if (info()) {
+        <div class="mb-3 px-4 py-3 text-sm bg-blue-50 text-blue-800 border border-blue-200 rounded-md">{{ info() }}</div>
+      }
 
       @if (error()) {
         <div class="mb-4 px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ error() }}</div>

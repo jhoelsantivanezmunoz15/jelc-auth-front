@@ -25,6 +25,11 @@ export const AUTH_ROUTES: Routes = [
       import('./pages/confirm-token/confirm-token.component').then(m => m.ConfirmTokenComponent),
   },
   {
+    path: 'force-change-password',
+    loadComponent: () =>
+      import('./pages/force-change-password/force-change-password.component').then(m => m.ForceChangePasswordComponent),
+  },
+  {
     path: 'oauth2-callback',
     loadComponent: () =>
       import('./pages/oauth2-callback/oauth2-callback.component').then(m => m.OAuth2CallbackComponent),

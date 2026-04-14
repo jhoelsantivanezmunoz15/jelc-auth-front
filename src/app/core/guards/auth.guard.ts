@@ -21,5 +21,9 @@ export const publicOnlyGuard: CanActivateFn = () => {
     return true;
   }
 
+  if (authState.mustChangePassword()) {
+    return router.createUrlTree(['/auth/force-change-password']);
+  }
+
   return router.createUrlTree(['/dashboard']);
 };

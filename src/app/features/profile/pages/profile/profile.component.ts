@@ -1,13 +1,14 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import QRCode from 'qrcode';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
 import { User } from '../../../../core/models/user.models';
 import { FeatureFlagStateService } from '../../../../core/services/feature-flag-state.service';
 import { ProfileService } from '../../services/profile.service';
-import { ActiveSession, ChangePasswordRequest, DisableMfaRequest, EnableMfaRequest, MfaSetupData, UpdateProfileRequest } from '../../models/profile.models';
+import { ActiveSession, ChangePasswordRequest, DisableMfaRequest, EnableMfaRequest, MfaSetupData, RequestChangeEmailRequest, SetPasswordRequest, UpdateProfileRequest } from '../../models/profile.models';
 
-type Tab = 'info' | 'password' | 'sessions' | 'mfa';
+type Tab = 'info' | 'password' | 'email' | 'sessions' | 'mfa';
 type MfaStep = 'status' | 'setup' | 'enable' | 'disable';
 
 @Component({
@@ -35,12 +36,25 @@ export class ProfileComponent implements OnInit {
   passwordError = signal<string | null>(null);
   passwordSuccess = signal<string | null>(null);
 
+  // ─── Set password (OAuth2-only users) ────────────────────────────────────
+  setPasswordForm: SetPasswordRequest = { newPassword: '' };
+  confirmSetPassword = '';
+  savingSetPassword = signal(false);
+  setPasswordError = signal<string | null>(null);
+  setPasswordSuccess = signal<string | null>(null);
+
   // ─── Sessions ────────────────────────────────────────────────────────────
   sessions = signal<ActiveSession[]>([]);
   loadingSessions = signal(false);
   sessionsError = signal<string | null>(null);
   revokingId = signal<string | null>(null);
   revokingAll = signal(false);
+
+  // ─── Change email ────────────────────────────────────────────────────────
+  emailForm: RequestChangeEmailRequest = { newEmail: '', currentPassword: '' };
+  savingEmail = signal(false);
+  emailError = signal<string | null>(null);
+  emailSuccess = signal<string | null>(null);
 
   // ─── MFA ─────────────────────────────────────────────────────────────────
   mfaStep = signal<MfaStep>('status');
@@ -54,16 +68,28 @@ export class ProfileComponent implements OnInit {
   mfaQrDataUrl = signal<string | null>(null);
 
   readonly mfaEnabled;
+  readonly oauth2Enabled;
+
+  linkingGoogle = signal(false);
 
   constructor(
     private profileService: ProfileService,
-    private ff: FeatureFlagStateService
+    private ff: FeatureFlagStateService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.mfaEnabled = this.ff.mfaEnabled;
+    this.oauth2Enabled = this.ff.oauth2Enabled;
   }
 
   ngOnInit(): void {
+    this.ff.load();
     this.loadProfile();
+    const linked = this.route.snapshot.queryParamMap.get('linked');
+    if (linked === 'true') {
+      this.showProfileSuccess('Cuenta de Google vinculada correctamente');
+      this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    }
   }
 
   setTab(tab: Tab): void {
@@ -257,6 +283,85 @@ export class ProfileComponent implements OnInit {
     this.enableForm = { code: '' };
     this.disableForm = { currentPassword: '' };
     this.mfaQrDataUrl.set(null);
+  }
+
+  // ─── Change email ────────────────────────────────────────────────────────
+
+  requestChangeEmail(): void {
+    this.emailError.set(null);
+    if (!this.emailForm.newEmail || !this.emailForm.currentPassword) return;
+    this.savingEmail.set(true);
+    this.profileService.requestChangeEmail(this.emailForm).subscribe({
+      next: () => {
+        this.emailForm = { newEmail: '', currentPassword: '' };
+        this.emailSuccess.set('Se ha enviado un correo de confirmación a la nueva dirección. Revisa tu bandeja.');
+        this.savingEmail.set(false);
+      },
+      error: (err: BackendError) => {
+        this.emailError.set(err.message);
+        this.savingEmail.set(false);
+      },
+    });
+  }
+
+  isLocal(): boolean {
+    return this.user()?.providers?.includes('LOCAL') ?? false;
+  }
+
+  isOAuthOnly(): boolean {
+    const providers = this.user()?.providers ?? [];
+    return providers.length > 0 && !providers.includes('LOCAL');
+  }
+
+  // ─── Set password ─────────────────────────────────────────────────────────
+
+  setPassword(): void {
+    this.setPasswordError.set(null);
+    if (this.setPasswordForm.newPassword !== this.confirmSetPassword) {
+      this.setPasswordError.set('Las contraseñas no coinciden');
+      return;
+    }
+    if (this.setPasswordForm.newPassword.length < 8) {
+      this.setPasswordError.set('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+    this.savingSetPassword.set(true);
+    this.profileService.setPassword(this.setPasswordForm).subscribe({
+      next: () => {
+        this.setPasswordForm = { newPassword: '' };
+        this.confirmSetPassword = '';
+        this.setPasswordSuccess.set('Contraseña configurada correctamente. Ya puedes iniciar sesión con email y contraseña.');
+        this.savingSetPassword.set(false);
+        this.loadProfile();
+      },
+      error: (err: BackendError) => {
+        this.setPasswordError.set(err.message);
+        this.savingSetPassword.set(false);
+      },
+    });
+  }
+
+  // ─── OAuth2 link ─────────────────────────────────────────────────────────
+
+  linkGoogle(): void {
+    if (this.isProviderLinked('GOOGLE')) return;
+    this.linkingGoogle.set(true);
+    this.profileError.set(null);
+    this.profileService.initLinkProvider('google').subscribe({
+      next: res => {
+        this.linkingGoogle.set(false);
+        window.location.href = res.data.redirectUrl;
+      },
+      error: (err: BackendError) => {
+        this.profileError.set(err.message);
+        this.linkingGoogle.set(false);
+      },
+    });
+  }
+
+  isProviderLinked(provider: string): boolean {
+    const providers = this.user()?.providers ?? [];
+    return providers.includes(provider);
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────

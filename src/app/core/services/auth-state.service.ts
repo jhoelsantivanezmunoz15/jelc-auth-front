@@ -11,6 +11,7 @@ export class AuthStateService {
   readonly isAuthenticated = computed(() => this._session() !== null);
   readonly currentRoles = computed(() => this._session()?.roles ?? []);
   readonly currentPermissions = computed(() => this._session()?.permissions ?? []);
+  readonly mustChangePassword = computed(() => this._session()?.mustChangePassword ?? false);
 
   constructor(private tokenService: TokenService) {
     this.restoreFromStorage();
@@ -25,6 +26,7 @@ export class AuthStateService {
       roles: payload.roles ?? [],
       permissions: payload.permissions ?? [],
       expiresAt,
+      mustChangePassword: payload.mustChangePassword ?? false,
     });
   }
 
@@ -50,6 +52,7 @@ export class AuthStateService {
         roles: payload.roles ?? [],
         permissions: payload.permissions ?? [],
         expiresAt: new Date(payload.exp * 1000).toISOString(),
+        mustChangePassword: payload.mustChangePassword ?? false,
       });
     }
   }

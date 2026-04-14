@@ -3,8 +3,17 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { RoleService } from '../../services/role.service';
 import { PermissionService } from '../../../permissions/services/permission.service';
+import { AuthStateService } from '../../../../core/services/auth-state.service';
 import { Permission } from '../../../../core/models/role.models';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
+
+const SUPERADMIN_ONLY_PERMISSIONS = new Set([
+  'SYSTEM_CONFIG_READ',
+  'SYSTEM_CONFIG_WRITE',
+  'FEATURE_FLAG_READ',
+  'FEATURE_FLAG_WRITE',
+  'AUDIT_READ',
+]);
 
 @Component({
   selector: 'app-role-form',
@@ -24,6 +33,7 @@ export class RoleFormComponent implements OnInit {
     private fb: FormBuilder,
     private roleService: RoleService,
     private permissionService: PermissionService,
+    private authState: AuthStateService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -45,8 +55,14 @@ export class RoleFormComponent implements OnInit {
   }
 
   private loadPermissions(): void {
+    const isSuperAdmin = this.authState.currentRoles().includes('SUPERADMIN');
     this.permissionService.getAll().subscribe({
-      next: res => this.availablePermissions.set(res.data),
+      next: res => {
+        const filtered = isSuperAdmin
+          ? res.data
+          : res.data.filter(p => !SUPERADMIN_ONLY_PERMISSIONS.has(p.code));
+        this.availablePermissions.set(filtered);
+      },
     });
   }
 

@@ -37,6 +37,7 @@ export interface TokenResponse {
   expiresAt: string;
   mfaRequired: boolean;
   challengeToken: string;
+  mustChangePassword: boolean;
 }
 
 export interface MfaSetupResponse {
@@ -57,4 +58,5 @@ export interface UserSession {
   roles: string[];
   permissions: string[];
   expiresAt: string;
+  mustChangePassword: boolean;
 }

@@ -4,8 +4,19 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { UserService } from '../../services/user.service';
 import { RoleService } from '../../../roles/services/role.service';
+import { AuthStateService } from '../../../../core/services/auth-state.service';
 import { Role } from '../../../../core/models/role.models';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
+
+const ROLE_LEVELS: Record<string, number> = { USER: 1, ADMIN: 2, SUPERADMIN: 3 };
+
+const SUPERADMIN_ONLY_PERMISSIONS = new Set([
+  'SYSTEM_CONFIG_READ',
+  'SYSTEM_CONFIG_WRITE',
+  'FEATURE_FLAG_READ',
+  'FEATURE_FLAG_WRITE',
+  'AUDIT_READ',
+]);
 
 @Component({
   selector: 'app-user-form',
@@ -25,6 +36,7 @@ export class UserFormComponent implements OnInit {
     private fb: FormBuilder,
     private userService: UserService,
     private roleService: RoleService,
+    private authState: AuthStateService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -39,19 +51,31 @@ export class UserFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadRoles();
+    this.form.get('password')!.disable();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEdit.set(true);
       this.userId.set(id);
       this.form.get('email')!.disable();
-      this.form.get('password')!.disable();
       this.loadUser(id);
     }
   }
 
   private loadRoles(): void {
+    const callerLevel = Math.max(
+      0,
+      ...this.authState.currentRoles().map(r => ROLE_LEVELS[r] ?? 1)
+    );
+    const isSuperAdmin = this.authState.currentRoles().includes('SUPERADMIN');
     this.roleService.getAll(undefined, 0, 100).subscribe({
-      next: res => this.availableRoles.set(res.data.content),
+      next: res => {
+        const filtered = res.data.content.filter(role => {
+          if ((ROLE_LEVELS[role.name] ?? 1) > callerLevel) return false;
+          if (!isSuperAdmin && role.permissions.some(p => SUPERADMIN_ONLY_PERMISSIONS.has(p.code))) return false;
+          return true;
+        });
+        this.availableRoles.set(filtered);
+      },
     });
   }
 

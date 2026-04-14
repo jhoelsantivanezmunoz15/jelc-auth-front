@@ -27,3 +27,20 @@ export interface EnableMfaRequest {
 export interface DisableMfaRequest {
   currentPassword: string;
 }
+
+export interface LinkProviderResponse {
+  redirectUrl: string;
+}
+
+export interface RequestChangeEmailRequest {
+  newEmail: string;
+  currentPassword: string;
+}
+
+export interface SetPasswordRequest {
+  newPassword: string;
+}
+
+export interface ForceChangePasswordRequest {
+  newPassword: string;
+}

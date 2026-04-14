@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../core/models/role.models';
 import { User } from '../../../core/models/user.models';
-import { ActiveSession, ChangePasswordRequest, DisableMfaRequest, EnableMfaRequest, MfaSetupData, UpdateProfileRequest } from '../models/profile.models';
+import { ActiveSession, ChangePasswordRequest, DisableMfaRequest, EnableMfaRequest, ForceChangePasswordRequest, LinkProviderResponse, MfaSetupData, RequestChangeEmailRequest, SetPasswordRequest, UpdateProfileRequest } from '../models/profile.models';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -33,7 +33,7 @@ export class ProfileService {
   }
 
   revokeAllSessions(): Observable<ApiResponse<void>> {
-    return this.http.post<ApiResponse<void>>(`${environment.apiUrl}/auth/revoke-all-token`, {});
+    return this.http.post<ApiResponse<void>>(`${environment.apiUrl}/api/v1/auth/revoke-all-token`, {});
   }
 
   setupMfa(): Observable<ApiResponse<MfaSetupData>> {
@@ -46,5 +46,24 @@ export class ProfileService {
 
   disableMfa(body: DisableMfaRequest): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.base}/mfa/disable`, { body });
+  }
+
+  requestChangeEmail(body: RequestChangeEmailRequest): Observable<ApiResponse<void>> {
+    return this.http.put<ApiResponse<void>>(`${this.base}/email`, body);
+  }
+
+  setPassword(body: SetPasswordRequest): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.base}/password`, body);
+  }
+
+  forceChangePassword(body: ForceChangePasswordRequest): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.base}/password/force`, body);
+  }
+
+  initLinkProvider(provider: string): Observable<ApiResponse<LinkProviderResponse>> {
+    return this.http.get<ApiResponse<LinkProviderResponse>>(
+      `${environment.apiUrl}/api/v1/auth/link/${provider}/init`,
+      { withCredentials: true }
+    );
   }
 }

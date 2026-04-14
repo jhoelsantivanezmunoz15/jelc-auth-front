@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
 import { FeatureFlagStateService } from '../../../../core/services/feature-flag-state.service';
@@ -20,6 +20,7 @@ export class LoginComponent implements OnInit {
   mfaForm: FormGroup;
   loading = signal(false);
   error = signal<string | null>(null);
+  info = signal<string | null>(null);
 
   private challengeToken = '';
 
@@ -31,6 +32,7 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private ff: FeatureFlagStateService
   ) {
     this.registrationOpen = this.ff.registrationOpen;
@@ -47,6 +49,10 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.ff.load();
+    const reason = this.route.snapshot.queryParamMap.get('reason');
+    if (reason === 'mustChangePassword') {
+      this.info.set('Tu sesion anterior requeria cambiar la contrasena. Actualizala para continuar.');
+    }
   }
 
   submit(): void {
@@ -60,6 +66,8 @@ export class LoginComponent implements OnInit {
         if (res.mfaRequired) {
           this.challengeToken = res.challengeToken;
           this.step.set('mfa');
+        } else if (res.mustChangePassword) {
+          this.router.navigate(['/auth/force-change-password']);
         } else {
           this.router.navigate(['/dashboard']);
         }
@@ -77,7 +85,13 @@ export class LoginComponent implements OnInit {
     this.error.set(null);
 
     this.authService.verifyMfa(this.challengeToken, this.mfaForm.value.code).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: res => {
+        if (res.mustChangePassword) {
+          this.router.navigate(['/auth/force-change-password']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
+      },
       error: (err: BackendError) => {
         this.error.set(err.message);
         this.loading.set(false);

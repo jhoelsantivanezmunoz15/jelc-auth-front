@@ -16,6 +16,7 @@ export interface User {
   createdBy: string;
   roles: RoleRef[];
   mfaEnabled: boolean;
+  providers: string[];
 }
 
 // ─── Requests ──────────────────────────────────────────────────────────────

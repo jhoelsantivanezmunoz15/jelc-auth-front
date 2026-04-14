@@ -14,8 +14,15 @@
     <button (click)="setTab('password')"
             class="px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer"
             [class]="activeTab() === 'password' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'">
-      Contraseña
+      {{ isOAuthOnly() ? 'Agregar contraseña' : 'Contraseña' }}
     </button>
+    @if (isLocal()) {
+      <button (click)="setTab('email')"
+              class="px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer"
+              [class]="activeTab() === 'email' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'">
+        Cambiar email
+      </button>
+    }
     <button (click)="setTab('sessions')"
             class="px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer"
             [class]="activeTab() === 'sessions' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'">
@@ -48,8 +55,38 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input type="email" [value]="user()?.email ?? ''" disabled
                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed" />
-          <p class="mt-1 text-xs text-gray-400">El email no puede cambiarse desde aquí</p>
+          @if (isLocal()) {
+            <p class="mt-1 text-xs text-gray-400">Para cambiar tu email ve a la pestaña <strong>Cambiar email</strong></p>
+          } @else {
+            <p class="mt-1 text-xs text-gray-400">El email no puede cambiarse desde aquí</p>
+          }
         </div>
+
+        @if (oauth2Enabled()) {
+          <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Vincular Google</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  @if (isProviderLinked('GOOGLE')) {
+                    Tu cuenta ya está vinculada con Google.
+                  } @else {
+                    Conecta tu cuenta local con Google para iniciar sesión más rápido.
+                  }
+                </p>
+              </div>
+              <button (click)="linkGoogle()" [disabled]="linkingGoogle() || isProviderLinked('GOOGLE')"
+                      class="px-4 py-2 text-sm font-medium rounded-md transition-colors disabled:opacity-60 cursor-pointer"
+                      [class]="isProviderLinked('GOOGLE') ? 'text-gray-600 bg-gray-200' : 'text-white bg-indigo-600 hover:bg-indigo-700'">
+                @if (isProviderLinked('GOOGLE')) {
+                  Google vinculado
+                } @else {
+                  {{ linkingGoogle() ? 'Redirigiendo...' : 'Vincular con Google' }}
+                }
+              </button>
+            </div>
+          </div>
+        }
 
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -89,37 +126,123 @@
 
   <!-- ── Password tab ── -->
   @if (activeTab() === 'password') {
+    @if (isOAuthOnly()) {
+      <!-- Set password for OAuth2-only users -->
+      <div class="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+
+        @if (setPasswordError()) {
+          <div class="px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ setPasswordError() }}</div>
+        }
+        @if (setPasswordSuccess()) {
+          <div class="px-4 py-3 text-sm bg-green-50 text-green-800 border border-green-200 rounded-md">{{ setPasswordSuccess() }}</div>
+        }
+
+        <p class="text-sm text-gray-600">
+          Tu cuenta fue creada con Google. Agrega una contraseña para poder iniciar sesión también con tu email y contraseña.
+        </p>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña <span class="text-red-500">*</span></label>
+          <input type="password" [(ngModel)]="setPasswordForm.newPassword" placeholder="Mínimo 8 caracteres"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña <span class="text-red-500">*</span></label>
+          <input type="password" [(ngModel)]="confirmSetPassword" placeholder="Repite la contraseña"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button (click)="setPassword()" [disabled]="savingSetPassword() || !setPasswordForm.newPassword || !confirmSetPassword"
+                  class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-60 cursor-pointer">
+            {{ savingSetPassword() ? 'Guardando...' : 'Agregar contraseña' }}
+          </button>
+        </div>
+      </div>
+    } @else {
+      <!-- Change password for LOCAL users -->
+      <div class="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+
+        @if (passwordError()) {
+          <div class="px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ passwordError() }}</div>
+        }
+        @if (passwordSuccess()) {
+          <div class="px-4 py-3 text-sm bg-green-50 text-green-800 border border-green-200 rounded-md">{{ passwordSuccess() }}</div>
+        }
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña actual <span class="text-red-500">*</span></label>
+          <input type="password" [(ngModel)]="passwordForm.currentPassword" placeholder="••••••••"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña <span class="text-red-500">*</span></label>
+          <input type="password" [(ngModel)]="passwordForm.newPassword" placeholder="Mínimo 8 caracteres"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar nueva contraseña <span class="text-red-500">*</span></label>
+          <input type="password" [(ngModel)]="confirmPassword" placeholder="Repite la nueva contraseña"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button (click)="changePassword()" [disabled]="savingPassword()"
+                  class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-60 cursor-pointer">
+            {{ savingPassword() ? 'Cambiando...' : 'Cambiar contraseña' }}
+          </button>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ── Email tab ── -->
+  @if (activeTab() === 'email' && isLocal()) {
     <div class="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
 
-      @if (passwordError()) {
-        <div class="px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ passwordError() }}</div>
+      @if (emailError()) {
+        <div class="px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ emailError() }}</div>
       }
-      @if (passwordSuccess()) {
-        <div class="px-4 py-3 text-sm bg-green-50 text-green-800 border border-green-200 rounded-md">{{ passwordSuccess() }}</div>
+      @if (emailSuccess()) {
+        <div class="px-4 py-3 text-sm bg-green-50 text-green-800 border border-green-200 rounded-md">{{ emailSuccess() }}</div>
       }
+
+      <div>
+        <p class="text-sm text-gray-600">Email actual: <span class="font-medium text-gray-800">{{ user()?.email }}</span></p>
+      </div>
+
+      @if (isProviderLinked('GOOGLE')) {
+        <div class="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-md">
+          <svg class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <p class="text-sm text-amber-800">
+            Tu cuenta está vinculada con Google. Al cambiar el email, la vinculación con Google se eliminará automáticamente y tendrás que volver a vincularla.
+          </p>
+        </div>
+      }
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nuevo email <span class="text-red-500">*</span></label>
+        <input type="email" [(ngModel)]="emailForm.newEmail" placeholder="nuevo@ejemplo.com"
+               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+      </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña actual <span class="text-red-500">*</span></label>
-        <input type="password" [(ngModel)]="passwordForm.currentPassword" placeholder="••••••••"
+        <input type="password" [(ngModel)]="emailForm.currentPassword" placeholder="••••••••"
                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña <span class="text-red-500">*</span></label>
-        <input type="password" [(ngModel)]="passwordForm.newPassword" placeholder="Mínimo 8 caracteres"
-               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar nueva contraseña <span class="text-red-500">*</span></label>
-        <input type="password" [(ngModel)]="confirmPassword" placeholder="Repite la nueva contraseña"
-               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+        <p class="mt-1 text-xs text-gray-400">Confirma tu identidad antes de cambiar el email</p>
       </div>
 
       <div class="flex justify-end pt-2">
-        <button (click)="changePassword()" [disabled]="savingPassword()"
+        <button (click)="requestChangeEmail()" [disabled]="savingEmail() || !emailForm.newEmail || !emailForm.currentPassword"
                 class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-60 cursor-pointer">
-          {{ savingPassword() ? 'Cambiando...' : 'Cambiar contraseña' }}
+          {{ savingEmail() ? 'Enviando...' : 'Solicitar cambio de email' }}
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { menuGuard } from './core/guards/menu.guard';
+import { mustChangePasswordGuard } from './core/guards/must-change-password.guard';
 
 export const routes: Routes = [
   // ─── Rutas públicas ──────────────────────────────────────────────────────
@@ -17,7 +18,7 @@ export const routes: Routes = [
       import('./layout/main-layout/main-layout.component').then(
         m => m.MainLayoutComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, mustChangePasswordGuard],
     children: [
       // Dashboard: siempre accesible para usuarios autenticados (punto de entrada)
       {

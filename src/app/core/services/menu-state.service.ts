@@ -57,7 +57,7 @@ export class MenuStateService {
 
     this._pending$ = this.menuService.getMenuForCurrentUser().pipe(
       tap(res => {
-        const nodes = res.data ?? [];
+        const nodes = this.filterEmptyParents(res.data ?? []);
         this._tree.set(nodes);
         this._flatRoutes.set(this.collectRoutes(nodes));
         this._loaded = true;
@@ -99,6 +99,13 @@ export class MenuStateService {
   }
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
+
+  /** Elimina nodos sin ruta y sin hijos (padres vacíos) de forma recursiva. */
+  private filterEmptyParents(nodes: MenuNode[]): MenuNode[] {
+    return nodes
+      .map(node => ({ ...node, children: this.filterEmptyParents(node.children ?? []) }))
+      .filter(node => node.route !== null || node.children.length > 0);
+  }
 
   /** Recorre el árbol recursivamente y recopila todos los valores de `route`. */
   private collectRoutes(nodes: MenuNode[]): Set<string> {

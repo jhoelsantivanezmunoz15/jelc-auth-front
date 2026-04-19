@@ -56,6 +56,14 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/profile/profile.routes').then(m => m.PROFILE_ROUTES),
       },
+      {
+        path: 'my-business-profiles',
+        canActivate: [menuGuard],
+        loadChildren: () =>
+          import('./features/my-business-profiles/my-business-profiles.routes').then(
+            m => m.MY_BUSINESS_PROFILES_ROUTES
+          ),
+      },
 
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],

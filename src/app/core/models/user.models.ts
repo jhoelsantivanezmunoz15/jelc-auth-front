@@ -1,8 +1,20 @@
 // ─── Domain ────────────────────────────────────────────────────────────────
 
+import { RoleType } from './role.models';
+
 export interface RoleRef {
   id: string;
   name: string;
+  roleType: RoleType;
+}
+
+export interface UserBusinessProfile {
+  id: string;
+  userId: string;
+  userFullName: string;
+  businessProfile: { id: string; name: string; description: string; active: boolean };
+  businessContext: { id: string; name: string; description: string; active: boolean };
+  active: boolean;
 }
 
 export interface User {

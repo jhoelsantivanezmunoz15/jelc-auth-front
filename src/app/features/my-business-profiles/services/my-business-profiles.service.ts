@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse, PageResult } from '../../../core/models/role.models';
 import {
+  AssignableRole,
   BusinessProfile,
   BusinessContext,
   BusinessProfileForm,
@@ -16,6 +17,7 @@ export class MyBusinessProfilesService {
   private readonly http = inject(HttpClient);
   private readonly profileBase = `${environment.apiUrl}/api/v1/business-profile`;
   private readonly contextBase = `${environment.apiUrl}/api/v1/business-context`;
+  private readonly profileRolesUrl = `${environment.apiUrl}/api/v1/profile/roles`;
 
   // ─── Business Profiles ───────────────────────────────────────────────────
 
@@ -23,6 +25,10 @@ export class MyBusinessProfilesService {
     const params: Record<string, string | number> = { page, size };
     if (search) params['search'] = search;
     return this.http.get<ApiResponse<PageResult<BusinessProfile>>>(this.profileBase, { params });
+  }
+
+  getProfileById(id: string): Observable<ApiResponse<BusinessProfile>> {
+    return this.http.get<ApiResponse<BusinessProfile>>(`${this.profileBase}/${id}`);
   }
 
   createProfile(body: BusinessProfileForm): Observable<ApiResponse<BusinessProfile>> {
@@ -35,6 +41,10 @@ export class MyBusinessProfilesService {
 
   deleteProfile(id: string): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.profileBase}/${id}`);
+  }
+
+  assignRoles(profileId: string, roleIds: string[]): Observable<ApiResponse<void>> {
+    return this.http.put<ApiResponse<void>>(`${this.profileBase}/${profileId}/roles`, { roleIds });
   }
 
   // ─── Business Contexts ───────────────────────────────────────────────────
@@ -55,5 +65,11 @@ export class MyBusinessProfilesService {
 
   deleteContext(id: string): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.contextBase}/${id}`);
+  }
+
+  // ─── Roles (for assignment) ───────────────────────────────────────────────
+
+  getAssignableRoles(): Observable<ApiResponse<AssignableRole[]>> {
+    return this.http.get<ApiResponse<AssignableRole[]>>(this.profileRolesUrl);
   }
 }

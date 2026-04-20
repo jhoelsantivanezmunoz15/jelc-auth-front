@@ -1,10 +1,22 @@
 import { PageResult } from '../../../core/models/role.models';
 
+export interface RoleRef {
+  id: string;
+  name: string;
+}
+
+export interface AssignableRole {
+  id: string;
+  name: string;
+  description: string;
+}
+
 export interface BusinessProfile {
   id: string;
   name: string;
   description: string;
   active: boolean;
+  roles: RoleRef[];
 }
 
 export interface BusinessContext {

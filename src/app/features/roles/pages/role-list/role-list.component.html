@@ -34,6 +34,7 @@
         <thead>
           <tr class="bg-gray-50 border-b-2 border-gray-200">
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
+            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tipo</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Descripción</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Permisos</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Acciones</th>
@@ -43,6 +44,14 @@
           @for (role of roles(); track role.id) {
             <tr class="border-b border-gray-100 last:border-b-0">
               <td class="px-4 py-3 text-sm font-medium">{{ role.name }}</td>
+              <td class="px-4 py-3 text-sm">
+                <span class="px-2 py-0.5 text-xs font-medium rounded-full"
+                      [class]="role.roleType === 'BUSINESS'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-600'">
+                  {{ role.roleType === 'BUSINESS' ? 'Negocio' : 'Seguridad' }}
+                </span>
+              </td>
               <td class="px-4 py-3 text-sm text-gray-500">{{ role.description }}</td>
               <td class="px-4 py-3 text-sm">{{ role.permissions.length }}</td>
               <td class="px-4 py-3 text-sm">
@@ -60,7 +69,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="4" class="px-4 py-6 text-sm text-gray-400 text-center">No hay roles registrados</td>
+              <td colspan="5" class="px-4 py-6 text-sm text-gray-400 text-center">No hay roles registrados</td>
             </tr>
           }
         </tbody>

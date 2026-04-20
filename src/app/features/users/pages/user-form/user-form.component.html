@@ -28,15 +28,6 @@
           <span class="block mt-1 text-xs text-red-600">Email inválido</span>
         }
       </div>
-
-      <!-- <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-        <input type="password" formControlName="password"
-               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
-        @if (form.get('password')?.invalid && form.get('password')?.touched) {
-          <span class="block mt-1 text-xs text-red-600">Mínimo 8 caracteres</span>
-        }
-      </div> -->
     }
 
     <div class="mb-6">
@@ -69,4 +60,74 @@
       </a>
     </div>
   </form>
+
+  <!-- ─── Perfiles de Negocio (solo en modo edición) ──────────────────────── -->
+  @if (isEdit() && canReadProfiles()) {
+    <div class="mt-8 border-t border-gray-200 pt-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Perfiles de Negocio</h3>
+
+      @if (profilesError()) {
+        <div class="mb-3 px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">{{ profilesError() }}</div>
+      }
+
+      <!-- Lista de perfiles asignados -->
+      @if (profilesLoading()) {
+        <p class="text-sm text-gray-400 mb-4">Cargando...</p>
+      } @else if (assignedProfiles().length === 0) {
+        <p class="text-sm text-gray-400 mb-4">No tiene perfiles asignados.</p>
+      } @else {
+        <div class="mb-4 space-y-2">
+          @for (item of assignedProfiles(); track item.id) {
+            <div class="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-md">
+              <div>
+                <span class="text-sm font-medium text-gray-800">{{ item.businessProfile.name }}</span>
+                <span class="mx-2 text-gray-300">|</span>
+                <span class="text-sm text-gray-500">{{ item.businessContext.name }}</span>
+              </div>
+              @if (canAssignProfiles()) {
+                <button type="button" (click)="removeProfile(item)"
+                        class="text-xs text-red-600 hover:text-red-800 cursor-pointer transition-colors">
+                  Quitar
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Formulario para asignar nuevo perfil -->
+      @if (canAssignProfiles()) {
+        <div class="flex gap-2 items-end">
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Perfil</label>
+            <select [value]="selectedProfileId()"
+                    (change)="selectedProfileId.set($any($event.target).value)"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 bg-white">
+              <option value="">Seleccionar...</option>
+              @for (p of availableProfiles(); track p.id) {
+                <option [value]="p.id">{{ p.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Contexto</label>
+            <select [value]="selectedContextId()"
+                    (change)="selectedContextId.set($any($event.target).value)"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 bg-white">
+              <option value="">Seleccionar...</option>
+              @for (c of availableContexts(); track c.id) {
+                <option [value]="c.id">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+          <button type="button"
+                  (click)="assignProfile()"
+                  [disabled]="!selectedProfileId() || !selectedContextId() || profilesSaving()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors whitespace-nowrap">
+            {{ profilesSaving() ? 'Asignando...' : 'Asignar' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
 </div>

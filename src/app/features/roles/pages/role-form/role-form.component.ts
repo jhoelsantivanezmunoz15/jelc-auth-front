@@ -3,17 +3,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { RoleService } from '../../services/role.service';
 import { PermissionService } from '../../../permissions/services/permission.service';
-import { AuthStateService } from '../../../../core/services/auth-state.service';
-import { Permission } from '../../../../core/models/role.models';
+import { Permission, RoleType } from '../../../../core/models/role.models';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
-
-const SUPERADMIN_ONLY_PERMISSIONS = new Set([
-  'SYSTEM_CONFIG_READ',
-  'SYSTEM_CONFIG_WRITE',
-  'FEATURE_FLAG_READ',
-  'FEATURE_FLAG_WRITE',
-  'AUDIT_READ',
-]);
 
 @Component({
   selector: 'app-role-form',
@@ -27,43 +18,50 @@ export class RoleFormComponent implements OnInit {
   error = signal<string | null>(null);
   isEdit = signal(false);
   roleId = signal<string | null>(null);
+  allPermissions = signal<Permission[]>([]);
   availablePermissions = signal<Permission[]>([]);
 
   constructor(
     private fb: FormBuilder,
     private roleService: RoleService,
     private permissionService: PermissionService,
-    private authState: AuthStateService,
     private route: ActivatedRoute,
     private router: Router
   ) {
     this.form = this.fb.group({
       name: ['', Validators.required],
       description: ['', Validators.required],
+      roleType: ['BUSINESS', Validators.required],
       permissions: [[]],
     });
   }
 
   ngOnInit(): void {
     this.loadPermissions();
+    this.form.get('roleType')!.valueChanges.subscribe(() => this.filterPermissions());
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEdit.set(true);
       this.roleId.set(id);
+      this.form.get('roleType')!.disable();
       this.loadRole(id);
     }
   }
 
   private loadPermissions(): void {
-    const isSuperAdmin = this.authState.currentRoles().includes('SUPERADMIN');
     this.permissionService.getAll().subscribe({
       next: res => {
-        const filtered = isSuperAdmin
-          ? res.data
-          : res.data.filter(p => !SUPERADMIN_ONLY_PERMISSIONS.has(p.code));
-        this.availablePermissions.set(filtered);
+        this.allPermissions.set(res.data);
+        this.filterPermissions();
       },
     });
+  }
+
+  private filterPermissions(): void {
+    const roleType: RoleType = this.form.get('roleType')!.value ?? 'BUSINESS';
+    this.availablePermissions.set(
+      this.allPermissions().filter(p => p.permissionType === roleType)
+    );
   }
 
   private loadRole(id: string): void {
@@ -73,6 +71,7 @@ export class RoleFormComponent implements OnInit {
         this.form.patchValue({
           name: res.data.name,
           description: res.data.description,
+          roleType: res.data.roleType ?? 'BUSINESS',
           permissions: res.data.permissions.map(p => p.code),
         });
         this.loading.set(false);

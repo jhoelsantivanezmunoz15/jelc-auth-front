@@ -35,7 +35,7 @@ export class TokenService {
     }
   }
 
-  decodePayload(token: string): { sub: string; roles: string[]; permissions: string[]; exp: number; mustChangePassword: boolean } {
+  decodePayload(token: string): { sub: string; roles: string[]; exp: number; mustChangePassword: boolean } {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     return JSON.parse(atob(base64));
   }

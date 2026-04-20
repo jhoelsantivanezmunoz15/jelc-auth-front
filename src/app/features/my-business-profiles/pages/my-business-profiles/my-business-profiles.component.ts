@@ -3,6 +3,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { AuthStateService } from '../../../../core/services/auth-state.service';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
 import {
+  AssignableRole,
   BusinessProfile,
   BusinessContext,
   BusinessProfileForm,
@@ -35,6 +36,14 @@ export class MyBusinessProfilesComponent implements OnInit {
   profileForm: BusinessProfileForm = { name: '', description: '' };
   profileSaving = signal(false);
   profileFormError = signal<string | null>(null);
+
+  // ─── Roles assignment state ───────────────────────────────────────────────
+  rolesModal = signal(false);
+  rolesModalProfile = signal<BusinessProfile | null>(null);
+  availableRoles = signal<AssignableRole[]>([]);
+  selectedRoleIds = signal<Set<string>>(new Set());
+  rolesSaving = signal(false);
+  rolesError = signal<string | null>(null);
 
   // ─── Contexts state ───────────────────────────────────────────────────────
   contexts = signal<BusinessContext[]>([]);
@@ -144,6 +153,57 @@ export class MyBusinessProfilesComponent implements OnInit {
 
   profilePages(): number[] {
     return Array.from({ length: this.profileTotalPages() }, (_, i) => i);
+  }
+
+  // ─── Roles assignment ────────────────────────────────────────────────────
+  openRolesModal(profile: BusinessProfile): void {
+    this.rolesModalProfile.set(profile);
+    this.rolesError.set(null);
+    this.selectedRoleIds.set(new Set(profile.roles?.map(r => r.id) ?? []));
+
+    this.service.getAssignableRoles().subscribe({
+      next: res => {
+        this.availableRoles.set(res.data);
+        this.rolesModal.set(true);
+      },
+      error: (err: BackendError) => this.profilesError.set(err.message),
+    });
+  }
+
+  toggleRole(roleId: string): void {
+    const current = new Set(this.selectedRoleIds());
+    if (current.has(roleId)) {
+      current.delete(roleId);
+    } else {
+      current.add(roleId);
+    }
+    this.selectedRoleIds.set(current);
+  }
+
+  isRoleSelected(roleId: string): boolean {
+    return this.selectedRoleIds().has(roleId);
+  }
+
+  closeRolesModal(): void {
+    this.rolesModal.set(false);
+  }
+
+  saveRoles(): void {
+    const profile = this.rolesModalProfile();
+    if (!profile) return;
+    this.rolesSaving.set(true);
+    this.rolesError.set(null);
+    this.service.assignRoles(profile.id, Array.from(this.selectedRoleIds())).subscribe({
+      next: () => {
+        this.rolesSaving.set(false);
+        this.rolesModal.set(false);
+        this.loadProfiles();
+      },
+      error: (err: BackendError) => {
+        this.rolesError.set(err.message);
+        this.rolesSaving.set(false);
+      },
+    });
   }
 
   // ─── Contexts CRUD ───────────────────────────────────────────────────────

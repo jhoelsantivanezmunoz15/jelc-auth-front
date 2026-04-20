@@ -4,19 +4,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { UserService } from '../../services/user.service';
 import { RoleService } from '../../../roles/services/role.service';
+import { MyBusinessProfilesService } from '../../../my-business-profiles/services/my-business-profiles.service';
 import { AuthStateService } from '../../../../core/services/auth-state.service';
 import { Role } from '../../../../core/models/role.models';
+import { UserBusinessProfile } from '../../../../core/models/user.models';
+import { BusinessProfile, BusinessContext } from '../../../my-business-profiles/models/my-business-profiles.models';
 import { BackendError } from '../../../../core/interceptors/error.interceptor';
-
-const ROLE_LEVELS: Record<string, number> = { USER: 1, ADMIN: 2, SUPERADMIN: 3 };
-
-const SUPERADMIN_ONLY_PERMISSIONS = new Set([
-  'SYSTEM_CONFIG_READ',
-  'SYSTEM_CONFIG_WRITE',
-  'FEATURE_FLAG_READ',
-  'FEATURE_FLAG_WRITE',
-  'AUDIT_READ',
-]);
 
 @Component({
   selector: 'app-user-form',
@@ -32,10 +25,21 @@ export class UserFormComponent implements OnInit {
   userId = signal<string | null>(null);
   availableRoles = signal<Role[]>([]);
 
+  // ─── Business profiles state ─────────────────────────────────────────────
+  assignedProfiles = signal<UserBusinessProfile[]>([]);
+  availableProfiles = signal<BusinessProfile[]>([]);
+  availableContexts = signal<BusinessContext[]>([]);
+  selectedProfileId = signal<string>('');
+  selectedContextId = signal<string>('');
+  profilesLoading = signal(false);
+  profilesError = signal<string | null>(null);
+  profilesSaving = signal(false);
+
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
     private roleService: RoleService,
+    private profilesService: MyBusinessProfilesService,
     private authState: AuthStateService,
     private route: ActivatedRoute,
     private router: Router
@@ -58,23 +62,27 @@ export class UserFormComponent implements OnInit {
       this.userId.set(id);
       this.form.get('email')!.disable();
       this.loadUser(id);
+      if (this.canReadProfiles()) {
+        this.loadAssignedProfiles(id);
+        this.loadAvailableProfilesAndContexts();
+      }
     }
   }
 
+  canReadProfiles(): boolean {
+    return this.authState.hasPermission('READ_BUSINESS_PROFILE');
+  }
+
+  canAssignProfiles(): boolean {
+    return this.authState.hasPermission('ASSIGN_BUSINESS_PROFILE');
+  }
+
   private loadRoles(): void {
-    const callerLevel = Math.max(
-      0,
-      ...this.authState.currentRoles().map(r => ROLE_LEVELS[r] ?? 1)
-    );
-    const isSuperAdmin = this.authState.currentRoles().includes('SUPERADMIN');
     this.roleService.getAll(undefined, 0, 100).subscribe({
       next: res => {
-        const filtered = res.data.content.filter(role => {
-          if ((ROLE_LEVELS[role.name] ?? 1) > callerLevel) return false;
-          if (!isSuperAdmin && role.permissions.some(p => SUPERADMIN_ONLY_PERMISSIONS.has(p.code))) return false;
-          return true;
-        });
-        this.availableRoles.set(filtered);
+        this.availableRoles.set(
+          res.data.content.filter(r => r.active && r.roleType === 'SECURITY')
+        );
       },
     });
   }
@@ -95,6 +103,60 @@ export class UserFormComponent implements OnInit {
         this.error.set(err.message);
         this.loading.set(false);
       },
+    });
+  }
+
+  private loadAssignedProfiles(userId: string): void {
+    this.profilesLoading.set(true);
+    this.userService.getUserBusinessProfiles(userId).subscribe({
+      next: res => {
+        this.assignedProfiles.set(res.data);
+        this.profilesLoading.set(false);
+      },
+      error: () => this.profilesLoading.set(false),
+    });
+  }
+
+  private loadAvailableProfilesAndContexts(): void {
+    this.profilesService.getProfiles(undefined, 0, 100).subscribe({
+      next: res => this.availableProfiles.set(res.data.content.filter(p => p.active)),
+    });
+    this.profilesService.getContexts(undefined, 0, 100).subscribe({
+      next: res => this.availableContexts.set(res.data.content.filter(c => c.active)),
+    });
+  }
+
+  assignProfile(): void {
+    const userId = this.userId();
+    const profileId = this.selectedProfileId();
+    const contextId = this.selectedContextId();
+    if (!userId || !profileId || !contextId) return;
+
+    this.profilesSaving.set(true);
+    this.profilesError.set(null);
+    this.userService.assignBusinessProfile(userId, profileId, contextId).subscribe({
+      next: res => {
+        this.assignedProfiles.update(list => [...list, res.data]);
+        this.selectedProfileId.set('');
+        this.selectedContextId.set('');
+        this.profilesSaving.set(false);
+      },
+      error: (err: BackendError) => {
+        this.profilesError.set(err.message);
+        this.profilesSaving.set(false);
+      },
+    });
+  }
+
+  removeProfile(item: UserBusinessProfile): void {
+    const userId = this.userId();
+    if (!userId) return;
+
+    this.userService.removeBusinessProfile(userId, item.businessProfile.id, item.businessContext.id).subscribe({
+      next: () => {
+        this.assignedProfiles.update(list => list.filter(p => p.id !== item.id));
+      },
+      error: (err: BackendError) => this.profilesError.set(err.message),
     });
   }
 

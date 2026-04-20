@@ -51,7 +51,11 @@ export class LoginComponent implements OnInit {
     this.ff.load();
     const reason = this.route.snapshot.queryParamMap.get('reason');
     if (reason === 'mustChangePassword') {
-      this.info.set('Tu sesion anterior requeria cambiar la contrasena. Actualizala para continuar.');
+      this.info.set('Tu sesión anterior requería cambiar la contraseña. Actualízala para continuar.');
+    } else if (reason === 'session_invalidated') {
+      this.info.set('Tu sesión fue cerrada porque tus permisos o roles fueron modificados. Por favor inicia sesión nuevamente.');
+    } else if (reason === 'session_expired') {
+      this.info.set('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
     }
   }
 

@@ -60,3 +60,10 @@ export interface UserSession {
   expiresAt: string;
   mustChangePassword: boolean;
 }
+
+export interface MeResponse {
+  email: string;
+  roles: string[];
+  permissions: string[];
+  mustChangePassword: boolean;
+}

@@ -1,16 +1,22 @@
 // ─── Domain ────────────────────────────────────────────────────────────────
 
+export type PermissionType = 'SECURITY' | 'BUSINESS';
+
 export interface Permission {
   id: string;
   code: string;
   name: string;
+  permissionType: PermissionType;
 }
+
+export type RoleType = 'SECURITY' | 'BUSINESS';
 
 export interface Role {
   id: string;
   name: string;
   description: string;
   active: boolean;
+  roleType: RoleType;
   permissions: Permission[];
 }
 
@@ -19,6 +25,7 @@ export interface Role {
 export interface CreateRoleRequest {
   name: string;
   description: string;
+  roleType: RoleType;
   permissions: string[];
 }
 

@@ -29,11 +29,6 @@ export const errorInterceptor: HttpInterceptorFn = (
         errors: err.error?.errors ?? {},
       };
 
-      if (err.status === 401) {
-        authState.clearSession();
-        router.navigate(['/auth/login']);
-      }
-
       if (err.status === 0) {
         backendError.message = 'No se pudo conectar con el servidor';
       }

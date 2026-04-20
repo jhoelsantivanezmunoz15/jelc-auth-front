@@ -4,12 +4,13 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../core/models/role.models';
-import { CreateUserRequest, PageResult, UpdateUserRequest, User } from '../../../core/models/user.models';
+import { CreateUserRequest, PageResult, UpdateUserRequest, User, UserBusinessProfile } from '../../../core/models/user.models';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/api/v1/user`;
+  private readonly usersBase = `${environment.apiUrl}/api/v1/users`;
 
   create(body: CreateUserRequest): Observable<ApiResponse<User>> {
     return this.http.post<ApiResponse<User>>(this.base, body);
@@ -42,5 +43,19 @@ export class UserService {
 
   delete(id: string): Observable<ApiResponse<null>> {
     return this.http.delete<ApiResponse<null>>(`${this.base}/${id}`);
+  }
+
+  getUserBusinessProfiles(userId: string): Observable<ApiResponse<UserBusinessProfile[]>> {
+    return this.http.get<ApiResponse<UserBusinessProfile[]>>(`${this.usersBase}/${userId}/business-profiles`);
+  }
+
+  assignBusinessProfile(userId: string, profileId: string, contextId: string): Observable<ApiResponse<UserBusinessProfile>> {
+    return this.http.post<ApiResponse<UserBusinessProfile>>(`${this.usersBase}/${userId}/business-profiles`, { profileId, contextId });
+  }
+
+  removeBusinessProfile(userId: string, profileId: string, contextId: string): Observable<ApiResponse<null>> {
+    return this.http.delete<ApiResponse<null>>(`${this.usersBase}/${userId}/business-profiles`, {
+      body: { profileId, contextId },
+    });
   }
 }

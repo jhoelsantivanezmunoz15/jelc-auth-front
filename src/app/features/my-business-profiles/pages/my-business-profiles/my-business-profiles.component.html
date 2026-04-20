@@ -1,0 +1,415 @@
+<div class="max-w-4xl">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold">Mis perfiles de negocio</h2>
+    <p class="mt-1 text-sm text-gray-500">Gestiona los perfiles y contextos de negocio.</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-1 border-b border-gray-200 mb-6">
+    <button (click)="setTab('profiles')"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer"
+            [class]="activeTab() === 'profiles'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'">
+      Perfiles
+    </button>
+    <button (click)="setTab('contexts')"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer"
+            [class]="activeTab() === 'contexts'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'">
+      Contextos
+    </button>
+  </div>
+
+  <!-- ─── Profiles tab ───────────────────────────────────────────────────── -->
+  @if (activeTab() === 'profiles') {
+    <div>
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex gap-2 flex-1 mr-4">
+          <input type="text"
+                 [value]="profileSearch()"
+                 (input)="profileSearch.set($any($event.target).value)"
+                 (keyup.enter)="profilePage.set(0); loadProfiles()"
+                 placeholder="Buscar por nombre..."
+                 class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+          <button (click)="profilePage.set(0); loadProfiles()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 cursor-pointer transition-colors">
+            Buscar
+          </button>
+          @if (profileSearch()) {
+            <button (click)="profileSearch.set(''); profilePage.set(0); loadProfiles()"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
+              Limpiar
+            </button>
+          }
+        </div>
+        @if (authState.hasPermission('CREATE_BUSINESS_PROFILE')) {
+          <button (click)="openCreateProfile()"
+                  class="shrink-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 cursor-pointer transition-colors">
+            Nuevo perfil
+          </button>
+        }
+      </div>
+
+      @if (profilesError()) {
+        <div class="mb-4 px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">
+          {{ profilesError() }}
+        </div>
+      }
+
+      @if (profilesLoading()) {
+        <p class="text-sm text-gray-500">Cargando...</p>
+      } @else {
+        <div class="bg-white rounded-lg overflow-hidden border border-gray-200">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-gray-50 border-b-2 border-gray-200">
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Descripción</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Roles</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of profiles(); track p.id) {
+                <tr class="border-b border-gray-100 last:border-b-0">
+                  <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ p.name }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-500">{{ p.description || '—' }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-500">
+                    @if (p.roles && p.roles.length > 0) {
+                      <div class="flex flex-wrap gap-1">
+                        @for (r of p.roles; track r.id) {
+                          <span class="px-2 py-0.5 text-xs bg-indigo-50 text-indigo-700 rounded-full">{{ r.name }}</span>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-gray-400">Sin roles</span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-sm">
+                    <span class="px-2 py-0.5 text-xs rounded-full"
+                          [class]="p.active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
+                      {{ p.active ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-sm">
+                    <div class="flex gap-2">
+                      @if (authState.hasPermission('UPDATE_BUSINESS_PROFILE')) {
+                        <button (click)="openEditProfile(p)"
+                                class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
+                          Editar
+                        </button>
+                        <button (click)="openRolesModal(p)"
+                                class="px-3 py-1 text-xs border border-indigo-300 text-indigo-700 rounded-md hover:bg-indigo-50 cursor-pointer transition-colors">
+                          Roles
+                        </button>
+                      }
+                      @if (authState.hasPermission('DELETE_BUSINESS_PROFILE')) {
+                        <button (click)="deleteProfile(p.id)"
+                                class="px-3 py-1 text-xs text-white bg-red-600 border border-red-600 rounded-md hover:bg-red-700 cursor-pointer transition-colors">
+                          Eliminar
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="px-4 py-6 text-sm text-gray-400 text-center">
+                    No hay perfiles registrados
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (profileTotalPages() > 1) {
+          <div class="flex items-center justify-between mt-4">
+            <p class="text-sm text-gray-500">{{ profileTotalElements() }} resultado{{ profileTotalElements() !== 1 ? 's' : '' }}</p>
+            <div class="flex gap-1">
+              <button (click)="profileGoToPage(profilePage() - 1)" [disabled]="profilePage() === 0"
+                      class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors">‹</button>
+              @for (pg of profilePages(); track pg) {
+                <button (click)="profileGoToPage(pg)"
+                        class="px-3 py-1 text-sm border rounded-md cursor-pointer transition-colors"
+                        [class]="pg === profilePage() ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 hover:bg-gray-50'">
+                  {{ pg + 1 }}
+                </button>
+              }
+              <button (click)="profileGoToPage(profilePage() + 1)" [disabled]="profilePage() >= profileTotalPages() - 1"
+                      class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors">›</button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- ─── Contexts tab ───────────────────────────────────────────────────── -->
+  @if (activeTab() === 'contexts') {
+    <div>
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex gap-2 flex-1 mr-4">
+          <input type="text"
+                 [value]="contextSearch()"
+                 (input)="contextSearch.set($any($event.target).value)"
+                 (keyup.enter)="contextPage.set(0); loadContexts()"
+                 placeholder="Buscar por nombre..."
+                 class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+          <button (click)="contextPage.set(0); loadContexts()"
+                  class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 cursor-pointer transition-colors">
+            Buscar
+          </button>
+          @if (contextSearch()) {
+            <button (click)="contextSearch.set(''); contextPage.set(0); loadContexts()"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
+              Limpiar
+            </button>
+          }
+        </div>
+        @if (authState.hasPermission('CREATE_BUSINESS_CONTEXT')) {
+          <button (click)="openCreateContext()"
+                  class="shrink-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 cursor-pointer transition-colors">
+            Nuevo contexto
+          </button>
+        }
+      </div>
+
+      @if (contextsError()) {
+        <div class="mb-4 px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">
+          {{ contextsError() }}
+        </div>
+      }
+
+      @if (contextsLoading()) {
+        <p class="text-sm text-gray-500">Cargando...</p>
+      } @else {
+        <div class="bg-white rounded-lg overflow-hidden border border-gray-200">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-gray-50 border-b-2 border-gray-200">
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Descripción</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Estado</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of contexts(); track c.id) {
+                <tr class="border-b border-gray-100 last:border-b-0">
+                  <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ c.name }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-500">{{ c.description || '—' }}</td>
+                  <td class="px-4 py-3 text-sm">
+                    <span class="px-2 py-0.5 text-xs rounded-full"
+                          [class]="c.active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'">
+                      {{ c.active ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-sm">
+                    <div class="flex gap-2">
+                      @if (authState.hasPermission('UPDATE_BUSINESS_CONTEXT')) {
+                        <button (click)="openEditContext(c)"
+                                class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
+                          Editar
+                        </button>
+                      }
+                      @if (authState.hasPermission('DELETE_BUSINESS_CONTEXT')) {
+                        <button (click)="deleteContext(c.id)"
+                                class="px-3 py-1 text-xs text-white bg-red-600 border border-red-600 rounded-md hover:bg-red-700 cursor-pointer transition-colors">
+                          Eliminar
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="px-4 py-6 text-sm text-gray-400 text-center">
+                    No hay contextos registrados
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (contextTotalPages() > 1) {
+          <div class="flex items-center justify-between mt-4">
+            <p class="text-sm text-gray-500">{{ contextTotalElements() }} resultado{{ contextTotalElements() !== 1 ? 's' : '' }}</p>
+            <div class="flex gap-1">
+              <button (click)="contextGoToPage(contextPage() - 1)" [disabled]="contextPage() === 0"
+                      class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors">‹</button>
+              @for (pg of contextPages(); track pg) {
+                <button (click)="contextGoToPage(pg)"
+                        class="px-3 py-1 text-sm border rounded-md cursor-pointer transition-colors"
+                        [class]="pg === contextPage() ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 hover:bg-gray-50'">
+                  {{ pg + 1 }}
+                </button>
+              }
+              <button (click)="contextGoToPage(contextPage() + 1)" [disabled]="contextPage() >= contextTotalPages() - 1"
+                      class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors">›</button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+</div>
+
+<!-- ─── Profile modal ──────────────────────────────────────────────────────── -->
+@if (profileModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <h3 class="text-base font-semibold text-gray-900">
+          {{ profileEditing() ? 'Editar perfil' : 'Nuevo perfil' }}
+        </h3>
+        <button (click)="closeProfileModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="px-6 py-4 space-y-4">
+        @if (profileFormError()) {
+          <div class="px-3 py-2 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">
+            {{ profileFormError() }}
+          </div>
+        }
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre <span class="text-red-500">*</span></label>
+          <input type="text"
+                 [value]="profileForm.name"
+                 (input)="profileForm.name = $any($event.target).value"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea
+                    [value]="profileForm.description"
+                    (input)="profileForm.description = $any($event.target).value"
+                    rows="3"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-200">
+        <button (click)="closeProfileModal()"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
+          Cancelar
+        </button>
+        <button (click)="saveProfile()" [disabled]="profileSaving()"
+                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transition-colors">
+          {{ profileSaving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── Roles modal ─────────────────────────────────────────────────────────── -->
+@if (rolesModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <h3 class="text-base font-semibold text-gray-900">
+          Roles — {{ rolesModalProfile()?.name }}
+        </h3>
+        <button (click)="closeRolesModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="px-6 py-4">
+        @if (rolesError()) {
+          <div class="mb-3 px-3 py-2 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">
+            {{ rolesError() }}
+          </div>
+        }
+        @if (availableRoles().length === 0) {
+          <p class="text-sm text-gray-400 text-center py-4">No hay roles disponibles</p>
+        } @else {
+          <div class="space-y-2 max-h-72 overflow-y-auto">
+            @for (role of availableRoles(); track role.id) {
+              <label class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox"
+                       [checked]="isRoleSelected(role.id)"
+                       (change)="toggleRole(role.id)"
+                       class="w-4 h-4 text-indigo-600 border-gray-300 rounded cursor-pointer" />
+                <div>
+                  <p class="text-sm font-medium text-gray-800">{{ role.name }}</p>
+                  @if (role.description) {
+                    <p class="text-xs text-gray-500">{{ role.description }}</p>
+                  }
+                </div>
+              </label>
+            }
+          </div>
+        }
+      </div>
+      <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-200">
+        <button (click)="closeRolesModal()"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
+          Cancelar
+        </button>
+        <button (click)="saveRoles()" [disabled]="rolesSaving()"
+                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transition-colors">
+          {{ rolesSaving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── Context modal ──────────────────────────────────────────────────────── -->
+@if (contextModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <h3 class="text-base font-semibold text-gray-900">
+          {{ contextEditing() ? 'Editar contexto' : 'Nuevo contexto' }}
+        </h3>
+        <button (click)="closeContextModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="px-6 py-4 space-y-4">
+        @if (contextFormError()) {
+          <div class="px-3 py-2 text-sm bg-red-50 text-red-800 border border-red-200 rounded-md">
+            {{ contextFormError() }}
+          </div>
+        }
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre <span class="text-red-500">*</span></label>
+          <input type="text"
+                 [value]="contextForm.name"
+                 (input)="contextForm.name = $any($event.target).value"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea
+                    [value]="contextForm.description"
+                    (input)="contextForm.description = $any($event.target).value"
+                    rows="3"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-200">
+        <button (click)="closeContextModal()"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
+          Cancelar
+        </button>
+        <button (click)="saveContext()" [disabled]="contextSaving()"
+                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transition-colors">
+          {{ contextSaving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -63,12 +63,13 @@ export class OAuth2CallbackComponent implements OnInit {
 
     if (accessToken && refreshToken && expiresAt) {
       this.tokenService.setTokens(accessToken, refreshToken);
-      this.authState.setSession(expiresAt);
-      if (this.authState.mustChangePassword()) {
-        this.router.navigate(['/auth/force-change-password'], { replaceUrl: true });
-      } else {
-        this.router.navigate(['/dashboard'], { replaceUrl: true });
-      }
+      this.authState.initSession().subscribe(() => {
+        if (this.authState.mustChangePassword()) {
+          this.router.navigate(['/auth/force-change-password'], { replaceUrl: true });
+        } else {
+          this.router.navigate(['/dashboard'], { replaceUrl: true });
+        }
+      });
     } else {
       this.error.set('Error al procesar el inicio de sesión social');
     }

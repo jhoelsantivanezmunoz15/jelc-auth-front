@@ -5,6 +5,7 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { AuthStateService } from './core/services/auth-state.service';
 import { FeatureFlagStateService } from './core/services/feature-flag-state.service';
 
 export const appConfig: ApplicationConfig = {
@@ -14,6 +15,12 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withInterceptors([authInterceptor, errorInterceptor])
     ),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (authState: AuthStateService) => () => authState.initSession(),
+      deps: [AuthStateService],
+      multi: true,
+    },
     {
       provide: APP_INITIALIZER,
       useFactory: (ffService: FeatureFlagStateService) => () => ffService.load(),

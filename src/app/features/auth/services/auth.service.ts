@@ -1,11 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, map, switchMap, of } from 'rxjs';
 import {
   ConfirmationTokenRequest,
   LoginRequest,
   LogoutRequest,
-  MfaSetupResponse,
   RegisterRequest,
   ResetPasswordRequest,
   TokenResponse,
@@ -34,11 +33,12 @@ export class AuthService {
   login(body: LoginRequest): Observable<TokenResponse> {
     return this.http.post<ApiResponse<TokenResponse>>(`${this.base}/login`, body).pipe(
       map(res => res.data),
-      tap(res => {
+      switchMap(res => {
         if (!res.mfaRequired) {
           this.tokenService.setTokens(res.accessToken, res.refreshToken);
-          this.authState.setSession(res.expiresAt);
+          return this.authState.initSession().pipe(map(() => res));
         }
+        return of(res);
       })
     );
   }
@@ -46,9 +46,9 @@ export class AuthService {
   verifyMfa(challengeToken: string, code: string): Observable<TokenResponse> {
     return this.http.post<ApiResponse<TokenResponse>>(`${this.base}/mfa/verify`, { challengeToken, code }).pipe(
       map(res => res.data),
-      tap(res => {
+      switchMap(res => {
         this.tokenService.setTokens(res.accessToken, res.refreshToken);
-        this.authState.setSession(res.expiresAt);
+        return this.authState.initSession().pipe(map(() => res));
       })
     );
   }
@@ -56,9 +56,9 @@ export class AuthService {
   register(body: RegisterRequest): Observable<TokenResponse> {
     return this.http.post<ApiResponse<TokenResponse>>(`${this.base}/register`, body).pipe(
       map(res => res.data),
-      tap(res => {
+      switchMap(res => {
         this.tokenService.setTokens(res.accessToken, res.refreshToken);
-        this.authState.setSession(res.expiresAt);
+        return this.authState.initSession().pipe(map(() => res));
       })
     );
   }
@@ -86,14 +86,20 @@ export class AuthService {
     const body: LogoutRequest = { refreshToken };
     return this.http.post<ApiResponse<VoidResponse>>(`${this.base}/logout`, body).pipe(
       map(res => res.data),
-      tap(() => this.authState.clearSession())
+      switchMap(res => {
+        this.authState.clearSession();
+        return of(res);
+      })
     );
   }
 
   revokeAllTokens(): Observable<VoidResponse> {
     return this.http.post<ApiResponse<VoidResponse>>(`${this.base}/revoke-all-token`, {}).pipe(
       map(res => res.data),
-      tap(() => this.authState.clearSession())
+      switchMap(res => {
+        this.authState.clearSession();
+        return of(res);
+      })
     );
   }
 }

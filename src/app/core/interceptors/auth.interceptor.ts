@@ -1,8 +1,10 @@
 import { HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthStateService } from '../services/auth-state.service';
 import { TokenService } from '../services/token.service';
+import { RefreshTokenService } from '../../features/auth/services/refresh-token.service';
 
 const PUBLIC_PATHS = [
   '/api/v1/auth/login',
@@ -27,6 +29,8 @@ export const authInterceptor: HttpInterceptorFn = (
 ) => {
   const tokenService = inject(TokenService);
   const authState = inject(AuthStateService);
+  const refreshTokenService = inject(RefreshTokenService);
+  const router = inject(Router);
 
   if (isPublic(req.url)) {
     return next(req);
@@ -37,27 +41,23 @@ export const authInterceptor: HttpInterceptorFn = (
 
   return next(authedReq).pipe(
     catchError(err => {
-      if (err.status === 401 && !req.url.includes('/auth/refresh')) {
-        const refreshToken = tokenService.getRefreshToken();
-        if (refreshToken) {
-          return inject(RefreshTokenService).refresh(refreshToken).pipe(
-            switchMap(tokens => {
-              tokenService.setTokens(tokens.accessToken, tokens.refreshToken);
-              authState.setSession(tokens.expiresAt);
-              return next(addBearer(req, tokens.accessToken));
-            }),
-            catchError(refreshErr => {
-              authState.clearSession();
-              return throwError(() => refreshErr);
-            })
-          );
-        }
-        authState.clearSession();
+      if (err.status === 401) {
+        return refreshTokenService.refresh().pipe(
+          switchMap(tokens => {
+            authState.setSessionFromJwt(tokens.expiresAt);
+            return next(addBearer(req, tokens.accessToken));
+          }),
+          catchError(refreshErr => {
+            authState.clearSession();
+            const reason = refreshErr?.message === 'Token invalidado'
+              ? 'session_invalidated'
+              : 'session_expired';
+            router.navigate(['/auth/login'], { queryParams: { reason } });
+            return throwError(() => refreshErr);
+          })
+        );
       }
       return throwError(() => err);
     })
   );
 };
-
-// Forward declaration to avoid circular dependency
-import { RefreshTokenService } from '../../features/auth/services/refresh-token.service';
